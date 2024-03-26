@@ -1,9 +1,15 @@
 <template>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
-  </nav>
-  <router-view />
+  <div>
+    <div v-if="api_available">
+      <router-view />
+    </div>
+    <div v-else>
+      <div class="alert alert-danger">
+        <h1>API is not available</h1>
+        <p>Please check your internet connection and try again</p>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style lang="scss">
@@ -28,3 +34,25 @@ nav {
   }
 }
 </style>
+<script>
+import axios from "axios";
+import { API_URL } from "../constants";
+export default {
+  name: "App",
+  data() {
+    return {
+      api_available: true,
+    };
+  },
+  created: function () {
+    axios
+      .get(API_URL + "/apiCheck")
+      .then(() => {
+        this.api_available = true;
+      })
+      .catch(() => {
+        this.api_available = false;
+      });
+  },
+};
+</script>
