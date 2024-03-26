@@ -13,3 +13,4 @@ class DevelopmentConfig(Config):
     SECRET_KEY = 'mysecret'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # SECURITY_USER_IDENTITY_ATTRIBUTES = "username"
+    
