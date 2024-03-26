@@ -112,6 +112,7 @@ export default {
   },
   beforeCreate() {
     const token = localStorage.getItem("library_management_system_token");
+    this.$store.commit("setNav", "dashboard");
     fetch(API_URL + "/dashboard", {
       method: "GET",
       headers: {
@@ -126,7 +127,6 @@ export default {
           this.$router.push("/signin");
         } else {
           this.$store.commit("setUser", data.user_data.username);
-          this.$store.commit("setNav", "dashboard");
           console.log(data.books[0].book_id);
           this.data = data;
         }
