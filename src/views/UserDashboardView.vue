@@ -2,10 +2,13 @@
   <div class="home vh-100 bg-image">
     <NavBar msg="Welcome to Library Management System" />
     <h1>User Dashboard</h1>
-
+    {{ bookimg }}
     <!-- <li v-for="section in data.books_lst_section" :key="section.id">
       <li v-for="books in section">{{ books }}--------------------</li>
     </li> -->
+    <img :src="imageSrc1" alt="Image" />
+    <img :src="imageSrc2" alt="Image" />
+    <img :src="imageSrc3" alt="Image" />
     <div
       v-for="section in data.books_lst_section"
       :key="section.id"
@@ -43,11 +46,13 @@
                   :href="'/signin' + books.book_id"
                   style="text-decoration: none"
                 >
-                  <img
+                  <!-- <img
                     alt="Never Lie: An addictive psychological thriller"
-                    src="https://m.media-amazon.com/images/I/41oCesFWhdL._PJku-sticker-v7,TopRight,0,-50._SY315_.jpg"
+                    :src="getBookImageUrl(books.book_id)"
                     style="max-width: 177px; max-height: 266px"
-                  />
+                   /> -->
+                  <img :src="'imageSrc' + 1" alt="Image" />
+
                   <br />
                   <div
                     style="
@@ -90,13 +95,20 @@
 </template>
 
 <script>
-// @ is an alias to /src
 import NavBar from "@/components/NavBar.vue";
 import { API_URL } from "../../constants";
+import axios from "axios";
+
 export default {
   name: "UserDashboardView",
   components: {
     NavBar,
+  },
+  data() {
+    return {
+      data: [],
+      bookimg: {},
+    };
   },
   beforeCreate() {
     const token = localStorage.getItem("library_management_system_token");
@@ -115,15 +127,40 @@ export default {
         } else {
           this.$store.commit("setUser", data.user_data.username);
           this.$store.commit("setNav", "dashboard");
-          console.log(data);
+          console.log(data.books[0].book_id);
           this.data = data;
+
+          // Iterate over each book and fetch its image
+          this.data.books.forEach((book) => {
+            this.getBookImageUrl(book.book_id);
+          });
         }
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
       });
   },
-  data() {
-    return {
-      data: [],
-    };
+  methods: {
+    getBookImageUrl(bookId) {
+      // Check if image source already fetched, if not fetch it
+      axios
+        .get(API_URL + "/fetchbookimg/" + bookId, {
+          responseType: "blob",
+        })
+        .then((response) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            // Ensure that imageSrc1 and bookimg are properly defined in the data object
+            this.imageSrc1 = reader.result;
+            this.bookimg[bookId] = reader.result; // Assuming you want to store it as an object
+            console.log(this.bookimg);
+          };
+          reader.readAsDataURL(response.data); // Read the blob data as data URL
+        })
+        .catch((error) => {
+          console.error("Error fetching image:", error);
+        });
+    },
   },
 };
 </script>
