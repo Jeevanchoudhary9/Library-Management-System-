@@ -123,9 +123,11 @@ export default {
       .then((response) => response.json())
       .then((data) => {
         if (data.status != "success") {
+          console.log("1")
           localStorage.removeItem("library_management_system_token");
           this.$router.push("/signin");
         } else {
+          console.log("2")
           this.$store.commit("setUser", data.user_data.username);
           console.log(data.books[0].book_id);
           this.data = data;

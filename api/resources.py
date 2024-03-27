@@ -153,11 +153,15 @@ api.add_resource(Dashboard, '/dashboard')
 
 class Book(Resource):
     method_decorators = {'get': [token_required]}
-
     def get(self,current_user,book_id):
         book_obj = Books.query.filter_by(book_id=book_id).first()
+        books=Books.query.filter_by(section_id=book_obj.section_id).all()
+        books_lst=[]
+        for book in books:
+            if book.book_id != book_id:
+                books_lst.append(book.serialize())
         if book_obj:
-            return make_response(jsonify({'books': book_obj.serialize(),'user_data': current_user.serialize(), 'status': 'success'}), 200)
+            return make_response(jsonify({'current_book': book_obj.serialize(),'user_data': current_user.serialize(), 'status': 'success','books': books_lst}), 200)
         return make_response(jsonify({'message': 'Book not found!', 'status': 'error'}), 404)
 
 api.add_resource(Book, '/book/<int:book_id>')

@@ -67,7 +67,7 @@ class Books(db.Model):
     date_issue=db.Column(db.DateTime)
     date_return=db.Column(db.DateTime)
     status=db.Column(db.String(10),nullable=False)
-    description=db.Column(db.String(1024))
+    description=db.Column(db.Text)
     title=db.Column(db.String(50))
 
     def serialize(self):
