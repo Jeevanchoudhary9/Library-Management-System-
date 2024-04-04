@@ -5,7 +5,7 @@
   </div>
   <div class="container-fluid text-center" style="margin-top: 2%">
     <div class="row">
-      <div class="col-md-3 order-md-first" style="margin-bottom: 10px;">
+      <div class="col-md-3 order-md-first" style="margin-bottom: 10px">
         <div class="mx-2">
           <img
             :src="fetchbookimg(this.$route.params.id)"
@@ -22,7 +22,9 @@
               class="fs-3 fw-semibold text-justify-center my-0"
               style="text-align: left"
             >
-              {{ current_book.book_name }}: {{ current_book.title }} ({{ current_book.status }})
+              {{ current_book.book_name }}: {{ current_book.title }} ({{
+                current_book.status
+              }})
             </p>
             <p
               class="text-justify-center"
@@ -64,12 +66,121 @@
               3 Some quick example text to build on the card title and make up
               the bulk of the card's content.
             </p>
-            <a
+            <!-- <a
               :href="'/request_book/' + 1"
               class="btn fw-medium d align-items-center justify-content-center"
               style="background-color: rgb(253, 147, 24); border-radius: 20px"
               >Request for Book</a
+            > -->
+            <button
+              type="button"
+              class="btn fw-medium d align-items-center justify-content-center"
+              style="background-color: rgb(253, 147, 24); border-radius: 20px; "
+              data-bs-toggle="modal"
+              data-bs-target="#myModal"
             >
+            Request for Book
+            </button>
+            <div class="modal" id="myModal">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <!-- Modal Header -->
+                  <div class="modal-header">
+                    <h4 class="modal-title">Request for Book</h4>
+                    <button
+                      type="button"
+                      class="btn-close"
+                      data-bs-dismiss="modal"
+                    ></button>
+                  </div>
+
+                  <!-- Modal body -->
+                  <div class="modal-body">
+                    <div>
+
+                      <!-- List group -->
+                      <ul
+                        class="list-group list-group-lg list-group-flush-y list-group-flush-x mb-7"
+                      >
+                        <li class="list-group-item">
+                          <div class="row align-items-center">
+                            <div class="col-4">
+                              <!-- Image -->
+                              <a href="">
+                                <img
+                                  :src="fetchbookimg(this.$route.params.id)"
+                                  class="mx-2"
+                                  style="width: 90px; height: 110px"
+                                  alt="..."
+                                />
+                              </a>
+                            </div>
+                            <div class="col">
+                              <!-- Title -->
+                              <p class="fs-sm fw-bold">
+                                <a class="text-body" href="product.html"
+                                  >{{ current_book.book_name }}: {{ current_book.title }} ({{
+                                    current_book.status
+                                  }})</a
+                                >
+                              </p>
+
+                              <!-- Text -->
+                              <div class="fs-sm text-muted">
+                                Author: {{ current_book.author }}<br />
+                                Pages: 1000 
+                              </div>
+                            </div>
+                          </div>
+                        </li>
+                        <hr>
+                      </ul>
+
+                      <!-- Card -->
+                      <div class="card mb-9 bg-light">
+                        <div class="card-body">
+                          <ul
+                            class="list-group list-group-sm list-group-flush-y list-group-flush-x"
+                          >
+                            <li class="list-group-item d-flex">
+                              <span>Current Date/Time</span>
+                              <span class="ms-auto fs-sm" id="date">{{ currentDate }}</span>
+                            </li>
+                            <li class="list-group-item d-flex">
+                              <div class="d-flex justify-content-center align-items-center">
+                                <span>Period of Time</span>
+                              </div>
+                              <input type="number" class="ms-auto fs-sm mx-2 form-control form-control-sm" style="width: 60px" id="timeperiod" required/>
+                              <select class="form-control form-control-sm" id="unitselection" style="width: 60px" required>
+                                <option selected value="hrs">hrs</option>
+                                <option value="days">days</option>
+                                <option value="weeks">weeks</option>
+                              </select>
+                            </li>
+                            <li class="list-group-item d-flex">
+                              <span>Return Date/Time</span>
+                              <span class="ms-auto fs-sm" id="datereturn">{{ returnDate }}</span>
+                            </li>
+                            <!-- <li class="list-group-item d-flex fs-lg fw-bold">
+                              <span>demo</span>
+                              <span class="ms-auto">demo</span>
+                            </li> -->
+                          </ul>
+                        </div>
+                      </div>
+
+                      <!-- Disclaimer -->
+                      <p class="mb-7 fs-xs text-gray-500 mt-2">
+                        After the Return of Date/Time, the book will be automatically returned or the access to user will be revoked.
+                      </p>
+
+                      <!-- Button -->
+                      <button :disabled="!isDateValid" class="btn w-100 btn-dark">Request for Book</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -203,6 +314,8 @@ export default {
     return {
       data: [],
       current_book: [],
+      currentDate: "",
+      returnDate: "-----",
     };
   },
   beforeCreate() {
@@ -242,6 +355,55 @@ export default {
     fetchbookimg(bookId) {
       return API_URL + "/fetchbookimg/" + bookId;
     },
+    date(){
+      return new Date().toLocaleString()
+    },
+    updateDate() {
+      let date= new Date().getTime();
+      this.currentDate = new Date(date).toLocaleString();
+    },
+    updatereturnDate() {
+      let date = new Date().getTime();
+      let period = document.getElementById("timeperiod").value;
+      let selection = document.getElementById("unitselection").value;
+      if (period === "" || selection === "") {
+        this.returnDate = "-----";
+        return;
+      }
+      let time = parseInt(period);
+      if (isNaN(time)) {
+          this.returnDate = "-----";
+          return;
+        }
+      console.log(date, period, selection, time);
+      if (selection === "hrs") {
+        time = time * 60 * 60 * 1000;
+      } else if (selection === "days") {
+        time = time * 24 * 60 * 60 * 1000;
+      } else if (selection === "weeks") {
+        time = time * 7 * 24 * 60 * 60 * 1000;
+      } else {
+        time = 0;
+      }
+      let calculatedDate = new Date(date).getTime() + time;
+      this.returnDate = new Date(calculatedDate).toLocaleString();
+    },
+  },
+  computed: {
+    isDateValid() {
+      let period = this.returnDate;
+      let time = parseInt(period);
+      if (isNaN(time)) {
+          return false;
+        }
+      return true;
+    },
+  },
+  mounted() {
+    this.updateDate(); 
+    this.updatereturnDate();
+    setInterval(this.updateDate, 1000);
+    setInterval(this.updatereturnDate, 1000);
   },
 };
 </script>
