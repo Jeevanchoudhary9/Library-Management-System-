@@ -181,6 +181,8 @@ class AddBooks(Resource):
     def post(self):
         
         data = request.json
+        if len(data['description'].split())>300 or sum(c.isalpha() for c in data['description']) >1600:
+            return make_response(jsonify({'message': 'Description should not exceed 300 words or 1600 characters', 'status': 'error'}), 400)
         try:
             date_issue = datetime.now()
             book = Books(book_name=data['book_name'], author=data['author'], image=data['image'], section_id=data['section_id'],date_issue=date_issue, status=data['status'], description=data['description'], title=data['title'])
@@ -204,7 +206,6 @@ class uploaddata(Resource):
             try:
                 date_issue = datetime.now()
                 book_data = request.form
-                
                 book = Books(
                     book_name=book_data['book_name'],
                     author=book_data['author'],

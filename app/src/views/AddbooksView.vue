@@ -10,11 +10,12 @@
       placeholder="Section ID"
     />
     <input type="text" v-model="formData.status" placeholder="Status" />
-    <input
-      type="text"
+    <!-- <input
+      type="textarea"
       v-model="formData.description"
       placeholder="Description"
-    />
+    /> -->
+    <textarea v-model="formData.description"></textarea>
     <input type="text" v-model="formData.title" placeholder="Title" />
     <button @click="uploadData">Upload</button>
   </div>
