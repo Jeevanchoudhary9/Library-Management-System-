@@ -156,12 +156,16 @@ class Book(Resource):
     def get(self,current_user,book_id):
         book_obj = Books.query.filter_by(book_id=book_id).first()
         books=Books.query.filter_by(section_id=book_obj.section_id).all()
+        try:
+            issue=Issue.query.filter_by(book_id=book_id, user_id=current_user.id).first().status
+        except:
+            issue=None
         books_lst=[]
         for book in books:
             if book.book_id != book_id:
                 books_lst.append(book.serialize())
         if book_obj:
-            return make_response(jsonify({'current_book': book_obj.serialize(),'user_data': current_user.serialize(), 'status': 'success','books': books_lst}), 200)
+            return make_response(jsonify({'current_book': book_obj.serialize(),'issue': issue,'user_data': current_user.serialize(), 'status': 'success','books': books_lst}), 200)
         return make_response(jsonify({'message': 'Book not found!', 'status': 'error'}), 404)
 
 api.add_resource(Book, '/book/<int:book_id>')
@@ -240,3 +244,83 @@ class AddSection(Resource):
             return make_response(jsonify({'error': str(e)}), 500)
         
 api.add_resource(AddSection, '/add_section')
+
+class RequestBook(Resource):
+    method_decorators = {'post': [token_required]}
+    
+    def post(self, current_user):
+        data = request.json
+        try:
+            if Issue.query.filter_by(user_id=current_user.id, book_id=data['book_id'], status='Requested').first():
+                return make_response(jsonify({'message': 'You have already requested this book', 'status': 'error'}), 400)
+            if Issue.query.filter_by(user_id=current_user.id).count() >= 5:
+                return make_response(jsonify({'message': 'You have reached the maximum limit of 5 books', 'status': 'error'}), 400)
+            print(current_user)
+            print(data)
+            print(data['book_id'],data['period'],data['unit'])
+            try:
+                data['period']=int(data['period'])
+            except:
+                return make_response(jsonify({'message': 'Invalid period', 'status': 'error'}), 400)
+            
+            if data['book_id'] == "" or data['period'] == "" or data['unit'] == "":
+                return make_response(jsonify({'message': 'All fields are required', 'status': 'error'}), 400)
+            if data['unit']=='hrs':
+                if data['period'] > 672:
+                    return make_response(jsonify({'message': 'Period should not be more than 4 weeks', 'status': 'error'}), 400)
+                return_date = datetime.now() + timedelta(hours=data['period'])
+            elif data['unit']=='days':
+                if data['period'] > 28:
+                    return make_response(jsonify({'message': 'Period should not be more than 4 weeks', 'status': 'error'}), 400)
+                return_date = datetime.now() + timedelta(days=data['period'])
+            elif data['unit']=='weeks':
+                if data['period'] > 4:
+                    return make_response(jsonify({'message': 'Period should not be more than 4 weeks', 'status': 'error'}), 400)
+                return_date = datetime.now() + timedelta(weeks=data['period'])
+            else:
+                return make_response(jsonify({'message': 'Invalid unit', 'status': 'error'}), 400)
+            
+            print(return_date)
+            
+            issue = Issue(book_id=data['book_id'], user_id=current_user.id, date_issue=datetime.now(), return_date=return_date, status='Requested')
+            db.session.add(issue)
+            db.session.commit()
+            return make_response(jsonify({'message': 'Request sent successfully', 'status': 'success'}), 201)
+        except Exception as e:
+            db.session.rollback()
+            return make_response(jsonify({'error': str(e)}), 500)
+
+api.add_resource(RequestBook, '/request_book')
+
+class CancelRequest(Resource):
+    method_decorators = {'post': [token_required]}
+    
+    def post(self, current_user):
+        data = request.json
+        try:
+            issue = Issue.query.filter_by(user_id=current_user.id, book_id=data['book_id'], status='Requested').first()
+            if issue:
+                db.session.delete(issue)
+                db.session.commit()
+                return make_response(jsonify({'message': 'Request cancelled successfully', 'status': 'success'}), 200)
+            return make_response(jsonify({'message': 'Request not found', 'status': 'error'}), 404)
+        except Exception as e:
+            db.session.rollback()
+            return make_response(jsonify({'error': str(e)}), 500)
+    
+api.add_resource(CancelRequest, '/cancel_request')
+
+class RequestedBooks(Resource):
+    method_decorators = {'get': [token_required]}
+
+    def get(self,current_user):
+        issues = Issue.query.filter_by(user_id=current_user.id).all()
+        issues_lst = []
+        books_lst = []
+        for issue in issues:
+            issue_temp =[issue.serialize()]
+            issue_temp.append(Books.query.filter_by(book_id=issue.book_id).first().short_serialize())
+            issues_lst.append(issue_temp)
+        return make_response(jsonify({'requested_books': issues_lst, 'status': 'success', 'current_user': current_user.serialize()}), 200)
+
+api.add_resource(RequestedBooks, '/requested_books')

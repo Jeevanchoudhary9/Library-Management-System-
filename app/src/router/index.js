@@ -29,7 +29,12 @@ const routes = [
   {
     path: "/request/:id",
     name: "request_book",
-    component: () => import("../views/RequestBookView.vue"),
+    component: () => import("../views/RequestedBooksView.vue"),
+  },
+  {
+    path: "/requestedbooks",
+    name: "requestedbooks",
+    component: () => import("../views/RequestedBooksView.vue"),
   },
   {
     path: "/logout",

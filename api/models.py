@@ -82,6 +82,16 @@ class Books(db.Model):
             'description': self.description,
             'title': self.title
         }
+    
+    def short_serialize(self):
+        return {
+            'book_id': self.book_id,
+            'book_name': self.book_name,
+            'author': self.author,
+            'section_id': self.section_id,
+            'status': self.status,
+            'title': self.title
+        }
 
 class Issue(db.Model):
     __TableName__='issue'
@@ -90,6 +100,17 @@ class Issue(db.Model):
     user_id=db.Column(db.Integer,nullable=False)
     date_issue=db.Column(db.DateTime,nullable=False)
     return_date=db.Column(db.DateTime,nullable=False)
+    status=db.Column(db.String(20),nullable=False)
+
+    def serialize(self):
+        return {
+            'issue_id': self.issue_id,
+            'book_id': self.book_id,
+            'user_id': self.user_id,
+            'date_issue': self.date_issue,
+            'return_date': self.return_date,
+            'status': self.status
+        }
 
 class history(db.Model):
     __TableName__='history'
