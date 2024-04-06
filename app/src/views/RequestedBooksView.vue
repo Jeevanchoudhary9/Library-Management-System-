@@ -3,11 +3,10 @@
     <NavBar msg="Welcome to Your Vue.js App" />
     <!-- <h1>Book Dashboard</h1> -->
   </div>
-  <div>{{ books }}</div>
+  <div></div>
   <div class="col-lg-10 offset-lg-1">
     <!-- Heading -->
     <h3 class="mb-3 mt-4">Requested Books</h3>
-
     <!-- Divider -->
     <hr class="my-7" />
 
@@ -62,11 +61,12 @@
               class="btn btn-info mt-1"
               style="max-width: 210px; min-width: 150px"
               data-bs-toggle="modal"
-              data-bs-target="#myModal"
+              :data-bs-target="'#myModal' + book[0].book_id"
+              v-on:click="book_id_selected = book[0].book_id"
             >
               Edit Request
             </button>
-            <div class="modal" id="myModal">
+            <div class="modal" :id="'myModal' + book[0].book_id">
               <div class="modal-dialog">
                 <div class="modal-content">
                   <!-- Modal Header -->
@@ -127,10 +127,7 @@
                           >
                             <li class="list-group-item d-flex">
                               <span>Current Date/Time</span>
-                              <span
-                                class="ms-auto fs-sm"
-                                id="date"
-                              >
+                              <span class="ms-auto fs-sm" id="date">
                                 {{ currentDate }}
                               </span>
                             </li>
@@ -144,12 +141,12 @@
                                 type="number"
                                 class="ms-auto fs-sm mx-2 form-control form-control-sm"
                                 style="width: 60px"
-                                id="timeperiod"
+                                :id="'timeperiod' + book[0].book_id"
                                 required
                               />
                               <select
                                 class="form-control form-control-sm"
-                                id="unitselection"
+                                :id="'unitselection' + book[0].book_id"
                                 style="width: 60px"
                                 required
                               >
@@ -160,10 +157,7 @@
                             </li>
                             <li class="list-group-item d-flex">
                               <span>Return Date/Time</span>
-                              <span
-                                class="ms-auto fs-sm"
-                                id="datereturn"
-                              >
+                              <span class="ms-auto fs-sm" id="datereturn">
                                 {{ returnDate }}
                               </span>
                             </li>
@@ -186,7 +180,7 @@
                       <button
                         :disabled="!isDateValid"
                         class="btn w-100 btn-dark"
-                        v-on:click="request()"
+                        v-on:click="request(book[0].book_id)"
                       >
                         Edit Book Request
                       </button>
@@ -200,7 +194,9 @@
       </li>
     </ul>
     <!-- Button -->
-    <button class="btn w-100 btn-dark">Cancel All Request</button>
+    <button class="btn w-100 btn-dark" v-on:click="cancel_all_requests()">
+      {{ button_message }}
+    </button>
   </div>
 </template>
 <script>
@@ -218,7 +214,19 @@ export default {
       returnDate: "-----",
       refreshIntervalId: "",
       status: "Request for Book",
+      book_id_selected: "",
+      button_message: "Cancel All Request",
     };
+  },
+  mounted() {
+    try {
+      this.updateDate();
+      this.updatereturnDate();
+      setInterval(this.updateDate, 1000);
+      this.refreshIntervalId = setInterval(this.updatereturnDate, 1000);
+    } catch (error) {
+      console.error("ss");
+    }
   },
   beforeCreate() {
     const token = localStorage.getItem("library_management_system_token");
@@ -233,13 +241,21 @@ export default {
       .then((response) => response.json())
       .then((data) => {
         console.log(data);
+        if (data.requested_books.length === 0) {
+          this.button_message = "No Requested Books";
+        }
         this.$store.commit("setUser", data.current_user.username);
         this.$store.commit("setNav", "Requested Books");
         this.books = data;
+        try {
+          this.book_id_selected = this.books.requested_books[0][0].book_id;
+        } catch (error) {
+          console.log();
+        }
       })
       .catch((error) => {
         console.error("Error:", error);
-        // this.$router.push("/signin");
+        this.$router.push("/signin");
       });
   },
   methods: {
@@ -253,11 +269,17 @@ export default {
       let date = new Date().getTime();
       this.currentDate = new Date(date).toLocaleString();
     },
-    updatereturnDate() {
+    updatereturnDate(book_id = this.book_id_selected) {
       try {
+        if (this.books.requested_books.length === 0) {
+          return;
+        }
+        console.log("book_id", book_id);
         let date = new Date().getTime();
-        let period = document.getElementById("timeperiod").value;
-        let selection = document.getElementById("unitselection").value;
+        let period = document.getElementById("timeperiod" + book_id).value;
+        let selection = document.getElementById(
+          "unitselection" + book_id
+        ).value;
         if (period === "" || selection === "") {
           this.returnDate = "-----";
           return;
@@ -279,16 +301,17 @@ export default {
         let calculatedDate = new Date(date).getTime() + time;
         this.returnDate = new Date(calculatedDate).toLocaleString();
       } catch (error) {
-        console.error("Error fetching data:", error);
+        // console.error("Error fetching data1:", error);
       }
     },
-    request() {
+    request(book_id) {
       try {
-        let period = document.getElementById("timeperiod").value;
-        let selection = document.getElementById("unitselection").value;
-        console.log(period, selection);
+        let period = document.getElementById("timeperiod" + book_id).value;
+        let selection = document.getElementById(
+          "unitselection" + book_id
+        ).value;
         let data = {
-          book_id: this.$route.params.id,
+          book_id: book_id,
           period: period,
           unit: selection,
         };
@@ -305,20 +328,16 @@ export default {
           .then((data) => {
             if (data.status !== "success") {
               alert(data.message);
-              console.log("1");
-              console.log(data);
             } else {
               alert(data.message);
-              console.log("2");
-              console.log(data);
               window.location.reload();
             }
           })
           .catch((error) => {
-            console.error("Error fetching data:", error);
+            console.error("Error fetching data2:", error);
           });
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching data3:", error);
       }
     },
     cancel_request(id) {
@@ -339,20 +358,42 @@ export default {
           .then((data) => {
             if (data.status !== "success") {
               alert(data.message);
-              console.log("1");
-              console.log(data);
             } else {
               alert(data.message);
-              console.log("2");
-              console.log(data);
               window.location.reload();
             }
           })
           .catch((error) => {
-            console.error("Error fetching data:", error);
+            console.error("Error fetching data4:", error);
           });
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching data5:", error);
+      }
+    },
+    cancel_all_requests() {
+      try {
+        const token = localStorage.getItem("library_management_system_token");
+        fetch(API_URL + "/cancel_all_requests", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-access-token": token,
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.status !== "success") {
+              alert(data.message);
+            } else {
+              alert(data.message);
+              window.location.reload();
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching data6:", error);
+          });
+      } catch (error) {
+        console.error("Error fetching data7:", error);
       }
     },
   },
@@ -366,21 +407,11 @@ export default {
       return true;
     },
   },
-  mounted() {
-    try {
-      this.updateDate();
-      this.updatereturnDate();
-      setInterval(this.updateDate, 1000);
-      this.refreshIntervalId = setInterval(this.updatereturnDate, 1000);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  },
   beforeUnmount() {
     try {
       clearInterval(this.refreshIntervalId);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching dasta:", error);
     }
   },
 };
