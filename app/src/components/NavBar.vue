@@ -13,7 +13,7 @@
         <code
           class="mx-2 ps-md-2 border-start border-md border-gray text-danger"
         >
-          {{ username }}'s Dashboard, {{ nav }}
+          {{ username }}'s {{ nav }}
         </code>
       </a>
       <div class="d-flex">
@@ -25,7 +25,19 @@
             <li
               class="nav-item mx-2 ps-md-4 border-start border-md border-gray"
             >
-              <a class="nav-link" href="/requestedbooks">Requested Books</a>
+              <a class="nav-link" href="/requested_books/Requested"
+                >Requested Books</a
+              >
+            </li>
+            <li
+              class="nav-item mx-2 ps-md-4 border-start border-md border-gray"
+            >
+              <a class="nav-link" href="/requested_books/Issued">My Books</a>
+            </li>
+            <li
+              class="nav-item mx-2 ps-md-4 border-start border-md border-gray"
+            >
+              <a class="nav-link" href="/history">History</a>
             </li>
             <li
               class="nav-item mx-2 ps-md-4 border-start border-md border-gray"

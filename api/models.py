@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 
 db=SQLAlchemy()
@@ -92,6 +93,30 @@ class Books(db.Model):
             'status': self.status,
             'title': self.title
         }
+    
+class History(db.Model):
+    __TableName__='history'
+    history_id=db.Column(db.Integer,primary_key=True,autoincrement=True,nullable=False,unique=True)
+    user_id=db.Column(db.Integer,nullable=False)
+    book_id=db.Column(db.Integer,nullable=False)
+    date_issue=db.Column(db.DateTime,nullable=False)
+    return_date=db.Column(db.DateTime,nullable=False)
+    section_id=db.Column(db.Integer,nullable=False)
+    status=db.Column(db.String(20),nullable=False)
+
+    def serialize(self):
+        return {
+            'history_id': self.history_id,
+            'username': User.query.filter_by(id=self.user_id).first().username,
+            'book_id': self.book_id,
+            'book_name': Books.query.filter_by(book_id=self.book_id).first().book_name,
+            'title': Books.query.filter_by(book_id=self.book_id).first().title,
+            'author': Books.query.filter_by(book_id=self.book_id).first().author,
+            'date_issue': self.date_issue,
+            'return_date': self.return_date,
+            'section_name': Section.query.filter_by(section_id=self.section_id).first().section_name,
+            'status': self.status
+        }
 
 class Issue(db.Model):
     __TableName__='issue'
@@ -101,6 +126,7 @@ class Issue(db.Model):
     date_issue=db.Column(db.DateTime,nullable=False)
     return_date=db.Column(db.DateTime,nullable=False)
     status=db.Column(db.String(20),nullable=False)
+    # status can be 'Requested' or 'Issued' or 'Returned' or 'Completed'
 
     def serialize(self):
         return {
@@ -111,14 +137,15 @@ class Issue(db.Model):
             'return_date': self.return_date,
             'status': self.status
         }
-
-class history(db.Model):
-    __TableName__='history'
-    history_id=db.Column(db.Integer,primary_key=True,autoincrement=True,nullable=False,unique=True)
-    user_id=db.Column(db.Integer,nullable=False)
-    book_id=db.Column(db.Integer,nullable=False)
-    date_issue=db.Column(db.DateTime,nullable=False)
-    return_date=db.Column(db.DateTime,nullable=False)
-    section_id=db.Column(db.Integer,nullable=False)
-
+    
+    def refresh():
+        issue=Issue.query.all()
+        for issue in issue:
+            if issue.return_date<datetime.now():
+                history = History(user_id=issue.user_id,book_id=issue.book_id,date_issue=issue.date_issue,return_date=issue.return_date,section_id=Books.query.filter_by(book_id=issue.book_id).first().section_id,status='Overdue')
+                db.session.add(history)
+                db.session.delete(issue)
+        db.session.commit()
+        
+            
 

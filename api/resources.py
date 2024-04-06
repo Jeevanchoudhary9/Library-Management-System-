@@ -38,6 +38,7 @@ class apiCheck(Resource):
     # Check API
     @cross_origin()
     def get(self):
+        Issue.refresh()
         return make_response(jsonify({'status': 'Success'}), 200)
     
 api.add_resource(apiCheck, '/apiCheck')
@@ -339,17 +340,38 @@ api.add_resource(CancelRequest, '/cancel_request')
 class RequestedBooks(Resource):
     method_decorators = {'get': [token_required]}
 
-    def get(self,current_user):
+    def get(self,current_user, status):
         issues = Issue.query.filter_by(user_id=current_user.id).all()
         issues_lst = []
         books_lst = []
         for issue in issues:
-            issue_temp =[issue.serialize()]
-            issue_temp.append(Books.query.filter_by(book_id=issue.book_id).first().short_serialize())
-            issues_lst.append(issue_temp)
+            if issue.status == status:
+                issue_temp =[issue.serialize()]
+                issue_temp.append(Books.query.filter_by(book_id=issue.book_id).first().short_serialize())
+                issues_lst.append(issue_temp)
         return make_response(jsonify({'requested_books': issues_lst, 'status': 'success', 'current_user': current_user.serialize()}), 200)
 
-api.add_resource(RequestedBooks, '/requested_books')
+api.add_resource(RequestedBooks, '/requested_books/<string:status>')
+
+class ReturnBook(Resource):
+    method_decorators = {'post': [token_required]}
+
+    def post(self,current_user):
+        data = request.json
+        try:
+            issue = Issue.query.filter_by(user_id=current_user.id, book_id=data['book_id'], status='Issued').first()
+            if issue:
+                db.session.delete(issue)
+                history = History(book_id=data['book_id'], user_id=current_user.id, date_issue=issue.date_issue, return_date=datetime.now(),status='Returned',section_id=Books.query.filter_by(book_id=data['book_id']).first().section_id)
+                db.session.add(history)
+                db.session.commit()
+                return make_response(jsonify({'message': 'Book returned successfully', 'status': 'success'}), 200)
+            return make_response(jsonify({'message': 'Book not found', 'status': 'error'}), 404)
+        except Exception as e:
+            db.session.rollback()
+            return make_response(jsonify({'error': str(e)}), 500)
+
+api.add_resource(ReturnBook, '/return_book')
 
 class CancelAllRequests(Resource):
     method_decorators = {'post': [token_required]}
@@ -366,3 +388,33 @@ class CancelAllRequests(Resource):
             return make_response(jsonify({'error': str(e)}), 500)
     
 api.add_resource(CancelAllRequests, '/cancel_all_requests')
+
+class ReturnAllBooks(Resource):
+    method_decorators = {'post': [token_required]}
+
+    def post(self,current_user):
+        try:
+            issues = Issue.query.filter_by(user_id=current_user.id, status='Issued').all()
+            for issue in issues:
+                history = History(book_id=issue.book_id, user_id=current_user.id, date_issue=issue.date_issue, return_date=datetime.now(),status='Returned',section_id=Books.query.filter_by(book_id=issue.book_id).first().section_id)
+                db.session.delete(issue)
+                db.session.add(history)
+                db.session.commit()
+            return make_response(jsonify({'message': 'All books returned successfully', 'status': 'success'}), 200)
+        except Exception as e:
+            db.session.rollback()
+            return make_response(jsonify({'error': str(e)}), 500)
+        
+api.add_resource(ReturnAllBooks, '/return_all_books')
+
+class HistoryBooks(Resource):
+    method_decorators = {'get': [token_required]}
+
+    def get(self,current_user):
+        history = History.query.filter_by(user_id=current_user.id).all()
+        history_lst = []
+        for h in history:
+            history_lst.append(h.serialize())
+        return make_response(jsonify({'history': history_lst, 'status': 'success'}), 200)
+    
+api.add_resource(HistoryBooks, '/history')
