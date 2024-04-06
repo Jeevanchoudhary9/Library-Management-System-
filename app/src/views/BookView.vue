@@ -22,9 +22,7 @@
               class="fs-3 fw-semibold text-justify-center my-0"
               style="text-align: left"
             >
-              {{ current_book.book_name }}: {{ current_book.title }} ({{
-                current_book.status
-              }})
+              {{ current_book.book_name }}: {{ current_book.title }}
             </p>
             <p
               class="text-justify-center"
