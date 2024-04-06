@@ -42,6 +42,11 @@ const routes = [
     component: () => import("../views/MyBooksView.vue"),
   },
   {
+    path: "/history",
+    name: "history",
+    component: () => import("../views/HistoryView.vue"),
+  },
+  {
     path: "/logout",
     name: "logout",
     component: () => import("../views/LogoutView.vue"),
