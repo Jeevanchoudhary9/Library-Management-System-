@@ -32,9 +32,14 @@ const routes = [
     component: () => import("../views/RequestedBooksView.vue"),
   },
   {
-    path: "/requestedbooks",
-    name: "requestedbooks",
+    path: "/requested_books/Requested",
+    name: "requested_books",
     component: () => import("../views/RequestedBooksView.vue"),
+  },
+  {
+    path: "/requested_books/Issued",
+    name: "issued_books",
+    component: () => import("../views/MyBooksView.vue"),
   },
   {
     path: "/logout",

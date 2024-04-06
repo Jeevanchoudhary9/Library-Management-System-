@@ -22,7 +22,7 @@
         <div class="row align-items-center">
           <div class="col-4">
             <!-- Image -->
-            <a href="product.html">
+            <a :href="book_path(book[0].book_id)">
               <img
                 :src="fetchbookimg(book[0].book_id)"
                 alt="..."
@@ -34,11 +34,11 @@
           <div class="col">
             <!-- Title -->
             <p class="mb-4 fs-sm fw-bold">
-              <a class="text-body" href="product.html"
+              <a class="text-body" :href="book_path(book[0].book_id)"
                 >{{ book[1].book_name }}: {{ book[1].title }}</a
               >
               <br />
-              <span class="text-muted">$40.00</span>
+              <!-- <span class="text-muted">$40.00</span> -->
             </p>
 
             <!-- Text -->
@@ -90,7 +90,7 @@
                           <div class="row align-items-center">
                             <div class="col-4">
                               <!-- Image -->
-                              <a href="">
+                              <a :href="book_path(book[0].book_id)">
                                 <img
                                   :src="fetchbookimg(book[0].book_id)"
                                   class="mx-2"
@@ -102,7 +102,10 @@
                             <div class="col">
                               <!-- Title -->
                               <p class="fs-sm fw-bold">
-                                <a class="text-body" href="product.html">
+                                <a
+                                  class="text-body"
+                                  :href="book_path(book[0].book_id)"
+                                >
                                   {{ book[1].book_name }} :
                                   {{ book[1].title }}
                                 </a>
@@ -231,7 +234,7 @@ export default {
   beforeCreate() {
     const token = localStorage.getItem("library_management_system_token");
     this.$store.commit("setNav", "Requested Books");
-    fetch(API_URL + "/requested_books", {
+    fetch(API_URL + "/requested_books/" + "Requested", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -261,6 +264,9 @@ export default {
   methods: {
     fetchbookimg(bookId) {
       return API_URL + "/fetchbookimg/" + bookId;
+    },
+    book_path(bookId) {
+      return "/book/" + bookId;
     },
     date() {
       return new Date().toLocaleString();
