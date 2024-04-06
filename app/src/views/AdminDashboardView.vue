@@ -233,14 +233,33 @@
                 <div class="row align-items-center">
                   <div class="col-4">
                     <!-- Image -->
-                    <a href="">
-                      <img
-                        src="fetchbookimg(this.$route.params.id)"
+                    <!-- <a href="">
+                      <input
+                        type="file"
+                        ref="fileInput"
+                        @change="handleFileUpload"
+                      />
+                      <input
+                        type="file"
                         class="mx-2"
                         style="width: 90px; height: 110px"
                         alt="..."
                       />
-                    </a>
+                    </a> -->
+                    <div>
+                      <label
+                        class="file-input-label border d-flex justify-content-between align-items-center"
+                        style="width: 90px; height: 110px"
+                      >
+                        <input
+                          type="file"
+                          ref="fileInput"
+                          @change="handleFileUpload"
+                          style="display: none"
+                        />
+                        Upload Photo
+                      </label>
+                    </div>
                   </div>
                   <div class="col">
                     <!-- Title -->
@@ -275,6 +294,7 @@
                       class="ms-auto fs-sm mx-2 form-control form-control-sm"
                       style="width: 120px"
                       id="bookname"
+                      v-model="formData.book_name"
                       required
                     />
                   </li>
@@ -285,6 +305,7 @@
                       class="ms-auto fs-sm mx-2 form-control form-control-sm"
                       style="width: 120px"
                       id="bookauthor"
+                      v-model="formData.author"
                       required
                     />
                   </li>
@@ -295,6 +316,7 @@
                       class="ms-auto fs-sm mx-2 form-control form-control-sm"
                       style="width: 120px"
                       id="bookstatus"
+                      v-model="formData.status"
                       required
                     />
                   </li>
@@ -304,6 +326,7 @@
                       class="ms-auto fs-sm mx-2 form-control form-control-sm"
                       style="width: 120px"
                       id="bookdescription"
+                      v-model="formData.description"
                       required
                     ></textarea>
                   </li>
@@ -314,6 +337,7 @@
                       class="ms-auto fs-sm mx-2 form-control form-control-sm"
                       style="width: 120px"
                       id="bookstatus"
+                      v-model="formData.title"
                       required
                     />
                   </li>
@@ -327,18 +351,16 @@
 
             <!-- Disclaimer -->
             <p class="mb-7 fs-xs text-gray-500 mt-2">
-              After the Return of Date/Time, the book will be automatically
-              returned or the access to user will be revoked.
+              Every field is required and photo must be in jpeg format.
             </p>
 
             <!-- Button -->
-            <!-- <button
-              :disabled="!isDateValid"
+            <button
               class="btn w-100 btn-dark"
-              v-on:click="request()"
+              v-on:click="uploadData(section_id)"
             >
-              Request for Book
-            </button> -->
+              Add Book
+            </button>
           </div>
         </div>
       </div>
@@ -347,6 +369,7 @@
 </template>
 <script>
 import NavBar_admin from "@/components/NavBar_admin.vue";
+import axios from "axios"; // Import axios library
 import { API_URL } from "../../constants";
 export default {
   name: "AdminDashboardView",
@@ -358,6 +381,15 @@ export default {
       data: [],
       title: "Add",
       section_id: null,
+      file: null,
+      formData: {
+        book_name: "",
+        author: "",
+        section_id: "",
+        status: "",
+        description: "",
+        title: "",
+      },
     };
   },
   beforeCreate() {
@@ -476,6 +508,27 @@ export default {
         .catch((error) => {
           console.error("Error fetching data:", error);
         });
+    },
+    handleFileUpload() {
+      this.file = this.$refs.fileInput.files[0];
+    },
+    async uploadData(section_id) {
+      const formData = new FormData();
+      formData.append("image", this.file);
+      formData.append("book_name", this.formData.book_name);
+      formData.append("author", this.formData.author);
+      formData.append("section_id", section_id);
+      formData.append("status", this.formData.status);
+      formData.append("description", this.formData.description);
+      formData.append("title", this.formData.title);
+
+      try {
+        await axios.post(API_URL + "/add_books", formData);
+        alert("Data uploaded successfully!");
+        window.location.reload();
+      } catch (error) {
+        console.error("Error uploading data:", error);
+      }
     },
     edit_section_name(id) {
       this.title = "Edit";

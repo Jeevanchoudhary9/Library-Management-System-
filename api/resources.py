@@ -203,25 +203,27 @@ class fetchbookimg(Resource):
 api.add_resource(fetchbookimg, '/fetchbookimg/<int:book_id>')
 
 
-class AddBooks(Resource):
-    def post(self):
+# class AddBooks(Resource):
+    
+#     def post(self):
         
-        data = request.json
-        if len(data['description'].split())>300 or sum(c.isalpha() for c in data['description']) >1600:
-            return make_response(jsonify({'message': 'Description should not exceed 300 words or 1600 characters', 'status': 'error'}), 400)
-        try:
-            date_issue = datetime.now()
-            book = Books(book_name=data['book_name'], author=data['author'], image=data['image'], section_id=data['section_id'],date_issue=date_issue, status=data['status'], description=data['description'], title=data['title'])
-            db.session.add(book)
-            db.session.commit()
-            return make_response(jsonify({'message': 'Book added successfully', 'status': 'success'}), 201)
-        except Exception as e:
-            db.session.rollback()
-            return make_response(jsonify({'error': str(e)}), 500)
+#         data = request.json
+#         if len(data['description'].split())>300 or sum(c.isalpha() for c in data['description']) >1600:
+#             return make_response(jsonify({'message': 'Description should not exceed 300 words or 1600 characters', 'status': 'error'}), 400)
+#         try:
+#             date_issue = datetime.now()
+#             book = Books(book_name=data['book_name'], author=data['author'], image=data['image'], section_id=data['section_id'],date_issue=date_issue, status=data['status'], description=data['description'], title=data['title'])
+#             db.session.add(book)
+#             db.session.commit()
+#             return make_response(jsonify({'message': 'Book added successfully', 'status': 'success'}), 201)
+#         except Exception as e:
+#             db.session.rollback()
+#             return make_response(jsonify({'error': str(e)}), 500)
         
-api.add_resource(AddBooks, '/add_books')
+# api.add_resource(AddBooks, '/add_books')
 
-class uploaddata(Resource):
+class AddBooks(Resource):
+    # method_decorators = {'post': [token_required]}
     def post(self):
 
         if request.files:
@@ -250,7 +252,7 @@ class uploaddata(Resource):
                 db.session.rollback()
                 return make_response(jsonify({'error': str(e)}), 500)
 
-api.add_resource(uploaddata, '/addbooks')
+api.add_resource(AddBooks, '/add_books')
 
 
 class AddSection(Resource):
