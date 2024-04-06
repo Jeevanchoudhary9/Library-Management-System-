@@ -80,8 +80,10 @@ export default {
     })
       .then((response) => response.json())
       .then((data) => {
-        if (data.status == "success") {
+        if (data.status == "success" && data.user.role != "admin") {
           this.$router.push("/");
+        } else if (data.status == "success" && data.user.role == "admin") {
+          this.$router.push("/admin_dashboard");
         }
       });
   },
@@ -107,10 +109,17 @@ export default {
       })
         .then((response) => response.json())
         .then((data) => {
-          if (data.status == "success") {
+          if (data.status == "success" && data.user_data.role != "admin") {
             localStorage.setItem("library_management_system_token", data.token);
             this.$store.commit("setUser", data.user_data.username);
             this.$router.push("/");
+          } else if (
+            data.status == "success" &&
+            data.user_data.role == "admin"
+          ) {
+            localStorage.setItem("library_management_system_token", data.token);
+            this.$store.commit("setUser", data.user_data.username);
+            this.$router.push("/admin_dashboard");
           } else {
             alert(data.message);
           }

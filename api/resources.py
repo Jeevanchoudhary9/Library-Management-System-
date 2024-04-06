@@ -49,7 +49,8 @@ class verify_token(Resource):
 
     @cross_origin()
     def get(self, current_user):
-        return make_response(jsonify({'message': 'Token verified successfully!', 'status': 'success'}), 200)
+        user = User.query.filter_by(public_id=current_user.public_id).first()
+        return make_response(jsonify({'message': 'Token verified successfully!', 'status': 'success','user': user.serialize()}), 200)
 
 api.add_resource(verify_token, '/verify_token')
 
@@ -152,6 +153,26 @@ class Dashboard(Resource):
 
 api.add_resource(Dashboard, '/dashboard')
 
+class adminDashboard(Resource):
+    method_decorators = {'get': [token_required]}
+
+    def get(self, current_user):
+        section = Section.query.all()
+        section_lst=[]
+        for sec in section:
+            section_temp=[]
+            section_temp.append(sec.serialize())
+            books_temp = []
+            for book in Books.query.filter_by(section_id=sec.section_id).all():
+                books_temp.append(book.serialize())
+            temp=[section_temp,books_temp]
+            section_lst.append(temp)
+        print(section_lst[0][1][0]['book_id'])
+        return make_response(jsonify({'message': 'Welcome to the admin\'s dashboard!','user_data': current_user.serialize(),'section': section_lst, 'status': 'success'}), 200)
+
+                
+api.add_resource(adminDashboard, '/admin_dashboard')
+
 class Book(Resource):
     method_decorators = {'get': [token_required]}
     def get(self,current_user,book_id):
@@ -233,10 +254,22 @@ api.add_resource(uploaddata, '/addbooks')
 
 
 class AddSection(Resource):
-    def post(self):
+    method_decorators = {'post': [token_required]}
+
+    def post(self, current_user):
         data = request.json
+        print(data)
         try:
-            section = Section(section_name=data['section_name'], date_created=datetime.now(), description=data['description'], photo=data['photo'])
+            if data['section_name'] == "" or data['description'] == "":
+                return make_response(jsonify({'message': 'All fields are required', 'status': 'error'}), 400)
+            if len(data['description'].split())>300 or sum(c.isalpha() for c in data['description']) >1600:
+                return make_response(jsonify({'message': 'Description should not exceed 300 words or 1600 characters', 'status': 'error'}), 400)
+            if Section.query.filter_by(section_name=data['section_name']).first():
+                return make_response(jsonify({'message': 'Section already exists', 'status': 'error'}), 409)
+        except Exception as e:
+            return make_response(jsonify({'message': str(e), 'status': 'error'}), 400)
+        try:
+            section = Section(section_name=data['section_name'], date_created=datetime.now(), description=data['description'])
             db.session.add(section)
             db.session.commit()
             return make_response(jsonify({'message': 'Section added successfully', 'status': 'success'}), 201)
@@ -245,6 +278,43 @@ class AddSection(Resource):
             return make_response(jsonify({'error': str(e)}), 500)
         
 api.add_resource(AddSection, '/add_section')
+
+class EditSection(Resource):
+    method_decorators = {'post': [token_required]}
+
+    def post(self, current_user):
+        data = request.json
+        try:
+            section = Section.query.filter_by(section_id=data['section_id']).first()
+            if section:
+                section.section_name = data['section_name']
+                section.description = data['description']
+                db.session.commit()
+                return make_response(jsonify({'message': 'Section updated successfully', 'status': 'success'}), 200)
+            return make_response(jsonify({'message': 'Section not found', 'status': 'error'}), 404)
+        except Exception as e:
+            db.session.rollback()
+            return make_response(jsonify({'error': str(e)}), 500)
+        
+api.add_resource(EditSection, '/edit_section')
+
+class DeleteSection(Resource):
+    method_decorators = {'post': [token_required]}
+
+    def post(self, current_user):
+        data = request.json
+        try:
+            section = Section.query.filter_by(section_id=data['section_id']).first()
+            if section:
+                db.session.delete(section)
+                db.session.commit()
+                return make_response(jsonify({'message': 'Section deleted successfully', 'status': 'success'}), 200)
+            return make_response(jsonify({'message': 'Section not found', 'status': 'error'}), 404)
+        except Exception as e:
+            db.session.rollback()
+            return make_response(jsonify({'error': str(e)}), 500)
+
+api.add_resource(DeleteSection, '/delete_section')
 
 class RequestBook(Resource):
     method_decorators = {'post': [token_required]}

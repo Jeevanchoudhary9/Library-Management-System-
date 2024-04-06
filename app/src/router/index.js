@@ -47,6 +47,11 @@ const routes = [
     component: () => import("../views/HistoryView.vue"),
   },
   {
+    path: "/admin_dashboard",
+    name: "admin_dashboard",
+    component: () => import("../views/AdminDashboardView.vue"),
+  },
+  {
     path: "/logout",
     name: "logout",
     component: () => import("../views/LogoutView.vue"),

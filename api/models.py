@@ -18,6 +18,7 @@ class User(db.Model):
             'id': self.id,
             'username': self.username,
             'profile_id': self.profile_id,
+            'role': self.role,
         }
     
 class Profile(db.Model):
@@ -47,15 +48,13 @@ class Section(db.Model):
     section_name=db.Column(db.String(50),nullable=False)
     date_created=db.Column(db.DateTime,nullable=False)
     description=db.Column(db.String(1024),nullable=False)
-    photo=db.Column(db.String(1024))
 
     def serialize(self):
         return {
             'section_id': self.section_id,
             'section_name': self.section_name,
             'date_created': self.date_created,
-            'description': self.description,
-            'photo': self.photo
+            'description': self.description
         }
 
 class Books(db.Model):
