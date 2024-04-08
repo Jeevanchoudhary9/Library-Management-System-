@@ -226,6 +226,8 @@ class AddBooks(Resource):
     # method_decorators = {'post': [token_required]}
     def post(self):
 
+        print("request")
+
         if request.files:
             # Handle file upload
             image_file = request.files['image']
@@ -308,6 +310,10 @@ class DeleteSection(Resource):
         try:
             section = Section.query.filter_by(section_id=data['section_id']).first()
             if section:
+                books = Books.query.filter_by(section_id=data['section_id']).all()
+                if books:
+                    for book in books:
+                        db.session.delete(book)
                 db.session.delete(section)
                 db.session.commit()
                 return make_response(jsonify({'message': 'Section deleted successfully', 'status': 'success'}), 200)
