@@ -226,8 +226,6 @@ class AddBooks(Resource):
     # method_decorators = {'post': [token_required]}
     def post(self):
 
-        print("request")
-
         if request.files:
             # Handle file upload
             image_file = request.files['image']
@@ -255,6 +253,62 @@ class AddBooks(Resource):
                 return make_response(jsonify({'error': str(e)}), 500)
 
 api.add_resource(AddBooks, '/add_books')
+
+class EditBook(Resource):
+    def post(self):
+        print("get request")
+        if request.files:
+            # Handle file upload
+            image_file = request.files['image']
+            image_data = image_file.read()
+            try:
+                book_data = request.form
+                book = Books.query.filter_by(book_id=book_data['book_id']).first()
+                if book_data['book_name'] == "" or book_data['author'] == "" or book_data['section_id'] == "" or book_data['status'] == "" or book_data['description'] == "" or book_data['title'] == "":
+                    return make_response(jsonify({'message': 'All fields are required', 'status': 'error'}), 400)
+                if len(book_data['description'].split())>300 or sum(c.isalpha() for c in book_data['description']) >1600:
+                    return make_response(jsonify({'message': 'Description should not exceed 300 words or 1600 characters', 'status': 'error'}), 400)
+                for book in Books.query.all():
+                    if book.book_name == book_data['book_name'] and book.book_id != book_data['book_id']:
+                        return make_response(jsonify({'message': 'Book already exists', 'status': 'error'}), 409)
+                book.book_name = book_data['book_name']
+                book.author = book_data['author']
+                book.image = image_data
+                book.section_id = book_data['section_id']
+                book.status = book_data['status']
+                book.description = book_data['description']
+                book.title = book_data['title']
+                db.session.commit()
+                return make_response(jsonify({'message': 'Book added successfully', 'status': 'success'}), 201)
+            except Exception as e:
+                db.session.rollback()
+                return make_response(jsonify({'error': str(e)}), 500)
+            # Handle form data
+        else:
+            try:
+                book_data = request.form
+                book = Books.query.filter_by(book_id=book_data['book_id']).first()
+                if book_data['book_name'] == "" or book_data['author'] == "" or book_data['section_id'] == "" or book_data['status'] == "" or book_data['description'] == "" or book_data['title'] == "":
+                    return make_response(jsonify({'message': 'All fields are required', 'status': 'error'}), 400)
+                if len(book_data['description'].split())>300 or sum(c.isalpha() for c in book_data['description']) >1600:
+                    return make_response(jsonify({'message': 'Description should not exceed 300 words or 1600 characters', 'status': 'error'}), 400)
+                for book in Books.query.all():
+                    print(book.book_name)
+                    if book.book_name == book_data['book_name'] and book.book_id != book_data['book_id']:
+                        return make_response(jsonify({'message': 'Book already exists', 'status': 'error'}), 409)
+                book.book_name = book_data['book_name']
+                book.author = book_data['author']
+                book.section_id = book_data['section_id']
+                book.status = book_data['status']
+                book.description = book_data['description']
+                book.title = book_data['title']
+                db.session.commit()
+                return make_response(jsonify({'message': 'Book Edited successfully', 'status': 'success'}), 201)
+            except Exception as e:
+                db.session.rollback()
+                return make_response(jsonify({'error': str(e)}), 500)
+
+api.add_resource(EditBook, '/edit_book')
 
 
 class AddSection(Resource):
@@ -323,6 +377,24 @@ class DeleteSection(Resource):
             return make_response(jsonify({'error': str(e)}), 500)
 
 api.add_resource(DeleteSection, '/delete_section')
+
+class DeleteBook(Resource):
+    method_decorators = {'post': [token_required]}
+
+    def post(self, current_user):
+        data = request.json
+        try:
+            book = Books.query.filter_by(book_id=data['book_id']).first()
+            if book:
+                db.session.delete(book)
+                db.session.commit()
+                return make_response(jsonify({'message': 'Book deleted successfully', 'status': 'success'}), 200)
+            return make_response(jsonify({'message': 'Book not found', 'status': 'error'}), 404)
+        except Exception as e:
+            db.session.rollback()
+            return make_response(jsonify({'error': str(e)}), 500)
+
+api.add_resource(DeleteBook, '/delete_book')
 
 class RequestBook(Resource):
     method_decorators = {'post': [token_required]}

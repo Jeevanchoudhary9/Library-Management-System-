@@ -121,10 +121,8 @@
                   <button
                     class="btn btn-warning btn-block mb-2 mx-1"
                     data-bs-toggle="modal"
-                    data-bs-target="#myModal_addbook"
-                    v-on:click="
-                      edit_book_data(books), add_book_name(books.book_id)
-                    "
+                    data-bs-target="#myModal_editbook"
+                    v-on:click="edit_book_data(books)"
                   >
                     Edit
                   </button>
@@ -453,6 +451,199 @@
       </div>
     </div>
   </div>
+  <div class="modal" id="myModal_editbook">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <h4 class="modal-title">Edit Book</h4>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+          ></button>
+        </div>
+
+        <!-- Modal body -->
+        <div class="modal-body">
+          <div>
+            <!-- List group -->
+            <ul
+              class="list-group list-group-lg list-group-flush-y list-group-flush-x mb-7"
+            >
+              <li class="list-group-item">
+                <div class="row align-items-center">
+                  <div class="col-4">
+                    <!-- Image -->
+                    <!-- <a href="">
+                      <input
+                        type="file"
+                        ref="fileInput"
+                        @change="handleFileUpload"
+                      />
+                      <input
+                        type="file"
+                        class="mx-2"
+                        style="width: 90px; height: 110px"
+                        alt="..."
+                      />
+                    </a> -->
+                    <div>
+                      <label
+                        :key="anotherPhotoURL"
+                        @change="renderAnotherImage($event.target.files[0])"
+                        class="file-input-label border d-flex justify-content-between align-items-center"
+                        style="
+                          max-width: 90px;
+                          max-height: 110px;
+                          width: 90px;
+                          height: 110px;
+                        "
+                        :style="{
+                          backgroundImage: `url(${anotherPhotoURL})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          width: '90px',
+                          height: '110px',
+                        }"
+                      >
+                        <input
+                          type="file"
+                          ref="anotherFileInput"
+                          @change="handleAnotherFileUpload"
+                          style="display: none"
+                        />
+                        Upload Another Photo
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col">
+                    <!-- Title -->
+                    <p class="fs-sm fw-bold">
+                      <a class="text-body" href="product.html"
+                        >{{ formData.book_name }} : {{ formData.title }}
+                      </a>
+                    </p>
+
+                    <!-- Text -->
+                    <div class="fs-sm text-muted">
+                      Author: {{ formData.author }} <br />
+                      Pages: 1000
+                    </div>
+                  </div>
+                  <div class="col" hidden>
+                    <!-- Title -->
+                    <p class="fs-sm fw-bold">
+                      <a class="text-body" href="product.html"
+                        >current_book.book_name : current_book.title
+                        current_book.status
+                      </a>
+                    </p>
+
+                    <!-- Text -->
+                    <div class="fs-sm text-muted">
+                      Author: current_book.author <br />
+                      Pages: 1000
+                    </div>
+                  </div>
+                </div>
+              </li>
+              <hr />
+            </ul>
+
+            <!-- Card -->
+            <div class="card mb-9 bg-light">
+              <div class="card-body">
+                <ul
+                  class="list-group list-group-sm list-group-flush-y list-group-flush-x"
+                >
+                  <li class="list-group-item d-flex">
+                    <span>Book Name</span>
+                    <input
+                      type="text"
+                      class="ms-auto fs-sm mx-2 form-control form-control-sm"
+                      style="width: 120px"
+                      id="bookname"
+                      v-model="formData.book_name"
+                      required
+                    />
+                  </li>
+                  <li class="list-group-item d-flex">
+                    <span>Section Id</span>
+                    <input
+                      type="text"
+                      class="ms-auto fs-sm mx-2 form-control form-control-sm"
+                      style="width: 120px"
+                      id="sectionid"
+                      v-model="formData.section_id"
+                      required
+                    />
+                  </li>
+                  <li class="list-group-item d-flex">
+                    <span>Author</span>
+                    <input
+                      type="text"
+                      class="ms-auto fs-sm mx-2 form-control form-control-sm"
+                      style="width: 120px"
+                      id="bookauthor"
+                      v-model="formData.author"
+                      required
+                    />
+                  </li>
+                  <li class="list-group-item d-flex">
+                    <span>Status</span>
+                    <input
+                      type="text"
+                      class="ms-auto fs-sm mx-2 form-control form-control-sm"
+                      style="width: 120px"
+                      id="bookstatus"
+                      v-model="formData.status"
+                      required
+                    />
+                  </li>
+                  <li class="list-group-item d-flex">
+                    <span>Description</span>
+                    <textarea
+                      class="ms-auto fs-sm mx-2 form-control form-control-sm"
+                      style="width: 120px"
+                      id="bookdescription"
+                      v-model="formData.description"
+                      required
+                    ></textarea>
+                  </li>
+                  <li class="list-group-item d-flex">
+                    <span>Title</span>
+                    <input
+                      type="text"
+                      class="ms-auto fs-sm mx-2 form-control form-control-sm"
+                      style="width: 120px"
+                      id="bookstatus"
+                      v-model="formData.title"
+                      required
+                    />
+                  </li>
+                  <!-- <li class="list-group-item d-flex fs-lg fw-bold">
+                              <span>demo</span>
+                              <span class="ms-auto">demo</span>
+                            </li> -->
+                </ul>
+              </div>
+            </div>
+
+            <!-- Disclaimer -->
+            <p class="mb-7 fs-xs text-gray-500 mt-2">
+              Every field is required and photo must be in jpeg format.
+            </p>
+
+            <!-- Button -->
+            <button class="btn w-100 btn-dark" v-on:click="uploadDataedit()">
+              Edit Book
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 <script>
 import NavBar_admin from "@/components/NavBar_admin.vue";
@@ -469,7 +660,9 @@ export default {
       title: "Add",
       section_id: null,
       file: null,
+      anotherFile: null,
       photoURL: "",
+      anotherPhotoURL: "",
       formData: {
         book_id: null,
         book_name: "",
@@ -579,7 +772,9 @@ export default {
       this.formData.title = book.title;
       this.formData.description = book.description;
       this.formData.status = book.status;
+      this.formData.section_id = book.section_id;
       this.edit_add = "Edit";
+      this.anotherPhotoURL = API_URL + "/fetchbookimg/" + book.book_id;
     },
     add_book_data(id) {
       this.section_id = id;
@@ -649,16 +844,70 @@ export default {
       formData.append("title", this.formData.title);
 
       try {
-        await axios.post(API_URL + "/add_books", formData);
-        alert("Data uploaded successfully!");
-        window.location.reload();
+        const response = await axios.post(API_URL + "/add_books", formData);
+        if (response.data.status != "success") {
+          alert(response.data.message);
+        } else {
+          alert(response.data.message);
+          window.location.reload();
+        }
       } catch (error) {
+        alert(error.response.data.message);
+        console.error("Error uploading data:", error);
+      }
+    },
+    handleAnotherFileUpload() {
+      this.anotherFile = this.$refs.anotherFileInput.files[0];
+      this.renderAnotherImage(this.anotherFile);
+    },
+    renderAnotherImage(anotherFile) {
+      const reader = new FileReader();
+      console.log("file", anotherFile);
+      reader.onload = (e) => {
+        this.anotherPhotoURL = e.target.result;
+        console.log("anotherPhotoURL", this.anotherPhotoURL);
+      };
+      reader.readAsDataURL(anotherFile);
+    },
+    async uploadDataedit() {
+      const formData = new FormData();
+      if (this.anotherFile != null) {
+        formData.append("image", this.anotherFile);
+      } else {
+        formData.append("image", "");
+      }
+      console.log(this.anotherFile);
+      formData.append("book_id", this.formData.book_id);
+      formData.append("book_name", this.formData.book_name);
+      formData.append("author", this.formData.author);
+      formData.append("section_id", this.formData.section_id);
+      formData.append("status", this.formData.status);
+      formData.append("description", this.formData.description);
+      formData.append("title", this.formData.title);
+      console.log(this.formData);
+      try {
+        const response = await axios.post(API_URL + "/edit_book", formData);
+        // get message from backend
+        if (response.data.status != "success") {
+          alert(response.data.message);
+        } else {
+          alert(response.data.message);
+          window.location.reload();
+        }
+      } catch (error) {
+        alert(error.response.data.message);
         console.error("Error uploading data:", error);
       }
     },
     edit_section_name(id) {
       this.title = "Edit";
       this.section_id = id;
+      this.formData.book_id = "";
+      this.formData.author = "";
+      this.formData.book_name = "";
+      this.formData.title = "";
+      this.formData.description = "";
+      this.formData.status = "";
     },
     add_section_name() {
       this.title = "Add";
@@ -669,6 +918,38 @@ export default {
       } else {
         return true;
       }
+    },
+    delete_book(bookid) {
+      const confirmed = window.confirm(
+        "Are you sure you want to delete this book\n" + "𝗕𝗼𝗼𝗸 𝘄𝗶𝗹𝗹 𝗯𝗲 𝗱𝗲𝗹𝗲𝘁𝗲𝗱?"
+      );
+      if (!confirmed) {
+        return;
+      }
+      const token = localStorage.getItem("library_management_system_token");
+      fetch(API_URL + "/delete_book", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-access-token": token,
+        },
+        body: JSON.stringify({
+          book_id: bookid,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log(data);
+          if (data.status != "success") {
+            alert(data.message);
+          } else {
+            alert(data.message);
+            window.location.reload();
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching data:", error);
+        });
     },
   },
 };
