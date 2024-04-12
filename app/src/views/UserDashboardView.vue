@@ -120,8 +120,17 @@ export default {
         "x-access-token": token,
       },
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (response.status == 401) {
+          console.log("1");
+          this.$router.push("/unauthorized");
+        } else {
+          console.log("2");
+          return response.json();
+        }
+      })
       .then((data) => {
+        console.log(data);
         if (data.status != "success") {
           console.log("1");
           localStorage.removeItem("library_management_system_token");

@@ -241,7 +241,13 @@ export default {
         "x-access-token": token,
       },
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (response.status == 401) {
+          this.$router.push("/unauthorized");
+        } else {
+          return response.json();
+        }
+      })
       .then((data) => {
         console.log(data);
         if (data.requested_books.length === 0) {
@@ -258,7 +264,6 @@ export default {
       })
       .catch((error) => {
         console.error("Error:", error);
-        this.$router.push("/signin");
       });
   },
   methods: {
@@ -330,7 +335,13 @@ export default {
           },
           body: JSON.stringify(data),
         })
-          .then((response) => response.json())
+          .then((response) => {
+            if (response.status == 401) {
+              this.$router.push("/unauthorized");
+            } else {
+              return response.json();
+            }
+          })
           .then((data) => {
             if (data.status !== "success") {
               alert(data.message);
@@ -360,7 +371,13 @@ export default {
           },
           body: JSON.stringify(data),
         })
-          .then((response) => response.json())
+          .then((response) => {
+            if (response.status == 401) {
+              this.$router.push("/unauthorized");
+            } else {
+              return response.json();
+            }
+          })
           .then((data) => {
             if (data.status !== "success") {
               alert(data.message);
@@ -386,7 +403,13 @@ export default {
             "x-access-token": token,
           },
         })
-          .then((response) => response.json())
+          .then((response) => {
+            if (response.status == 401) {
+              this.$router.push("/unauthorized");
+            } else {
+              return response.json();
+            }
+          })
           .then((data) => {
             if (data.status !== "success") {
               alert(data.message);

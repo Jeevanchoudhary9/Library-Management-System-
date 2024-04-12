@@ -117,7 +117,7 @@ class Login(Resource):
         username = auth['username']
         password = auth['password']
         if not username or not password:
-            return make_response(jsonify({'message': 'Please enter all fields!', 'status': 'error'}), 401)
+            return make_response(jsonify({'message': 'Please enter all fields!', 'status': 'error'}), 400)
         user = User.query.filter_by(username=username).first()
         if not user:
             return make_response(jsonify({'message': 'User does not exist!', 'status': 'error'}), 404)
@@ -133,6 +133,8 @@ class Dashboard(Resource):
     method_decorators = {'get': [token_required]}
 
     def get(self, current_user):
+        if current_user.role == 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         books = Books.query.all()
         books_lst=[]
         for book in books:
@@ -142,6 +144,8 @@ class Dashboard(Resource):
         sections = Section.query.all()
         for section in sections:
             books=Books.query.filter_by(section_id=section.section_id).all()
+            if len(books)==0:
+                continue
             books_temp=[]
             for book in books:
                 temp = book.serialize()
@@ -153,10 +157,20 @@ class Dashboard(Resource):
 
 api.add_resource(Dashboard, '/dashboard')
 
+class VerifyUser(Resource):
+    method_decorators = {'get': [token_required]}
+
+    def get(self, current_user):
+        return make_response(jsonify({'message': 'Authorized', 'status': 'success'}), 200)
+
+api.add_resource(VerifyUser, '/verify_user')
+
 class adminDashboard(Resource):
     method_decorators = {'get': [token_required]}
 
     def get(self, current_user):
+        if current_user.role != 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         section = Section.query.all()
         section_lst=[]
         for sec in section:
@@ -176,6 +190,8 @@ api.add_resource(adminDashboard, '/admin_dashboard')
 class Book(Resource):
     method_decorators = {'get': [token_required]}
     def get(self,current_user,book_id):
+        if current_user.role == 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         book_obj = Books.query.filter_by(book_id=book_id).first()
         books=Books.query.filter_by(section_id=book_obj.section_id).all()
         try:
@@ -223,9 +239,10 @@ api.add_resource(fetchbookimg, '/fetchbookimg/<int:book_id>')
 # api.add_resource(AddBooks, '/add_books')
 
 class AddBooks(Resource):
-    # method_decorators = {'post': [token_required]}
-    def post(self):
-
+    method_decorators = {'post': [token_required]}
+    def post(self, current_user):
+        if current_user.role != 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         if request.files:
             # Handle file upload
             image_file = request.files['image']
@@ -255,7 +272,10 @@ class AddBooks(Resource):
 api.add_resource(AddBooks, '/add_books')
 
 class EditBook(Resource):
-    def post(self):
+    method_decorators = {'post': [token_required]}
+    def post(self, current_user):
+        if current_user.role != 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         print("get request")
         if request.files:
             # Handle file upload
@@ -315,6 +335,8 @@ class AddSection(Resource):
     method_decorators = {'post': [token_required]}
 
     def post(self, current_user):
+        if current_user.role != 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         data = request.json
         print(data)
         try:
@@ -341,6 +363,8 @@ class EditSection(Resource):
     method_decorators = {'post': [token_required]}
 
     def post(self, current_user):
+        if current_user.role != 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         data = request.json
         try:
             section = Section.query.filter_by(section_id=data['section_id']).first()
@@ -360,6 +384,8 @@ class DeleteSection(Resource):
     method_decorators = {'post': [token_required]}
 
     def post(self, current_user):
+        if current_user.role != 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         data = request.json
         try:
             section = Section.query.filter_by(section_id=data['section_id']).first()
@@ -382,6 +408,8 @@ class DeleteBook(Resource):
     method_decorators = {'post': [token_required]}
 
     def post(self, current_user):
+        if current_user.role != 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         data = request.json
         try:
             book = Books.query.filter_by(book_id=data['book_id']).first()
@@ -400,8 +428,14 @@ class RequestBook(Resource):
     method_decorators = {'post': [token_required]}
     
     def post(self, current_user):
+        if current_user.role == 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         data = request.json
         try:
+            if data['period'] == "":
+                return make_response(jsonify({'message': 'All fields are required', 'status': 'error'}), 400)
+            if int(data['period']) <= 0:
+                return make_response(jsonify({'message': 'Invalid period', 'status': 'error'}), 400)
             if Issue.query.filter_by(user_id=current_user.id, book_id=data['book_id'], status='Requested').first():
                 issue = Issue.query.filter_by(user_id=current_user.id, book_id=data['book_id'], status='Requested').first()
                 try:
@@ -473,6 +507,8 @@ class CancelRequest(Resource):
     method_decorators = {'post': [token_required]}
     
     def post(self, current_user):
+        if current_user.role == 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         data = request.json
         try:
             issue = Issue.query.filter_by(user_id=current_user.id, book_id=data['book_id'], status='Requested').first()
@@ -491,6 +527,8 @@ class RequestedBooks(Resource):
     method_decorators = {'get': [token_required]}
 
     def get(self,current_user, status):
+        if current_user.role == 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         issues = Issue.query.filter_by(user_id=current_user.id).all()
         issues_lst = []
         books_lst = []
@@ -507,6 +545,8 @@ class ReturnBook(Resource):
     method_decorators = {'post': [token_required]}
 
     def post(self,current_user):
+        if current_user.role == 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         data = request.json
         try:
             issue = Issue.query.filter_by(user_id=current_user.id, book_id=data['book_id'], status='Issued').first()
@@ -527,6 +567,8 @@ class CancelAllRequests(Resource):
     method_decorators = {'post': [token_required]}
     
     def post(self, current_user):
+        if current_user.role == 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         try:
             issues = Issue.query.filter_by(user_id=current_user.id, status='Requested').all()
             for issue in issues:
@@ -544,6 +586,8 @@ class ReturnAllBooks(Resource):
 
     def post(self,current_user):
         try:
+            if current_user.role == 'admin':
+                return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
             issues = Issue.query.filter_by(user_id=current_user.id, status='Issued').all()
             for issue in issues:
                 history = History(book_id=issue.book_id, user_id=current_user.id, date_issue=issue.date_issue, return_date=datetime.now(),status='Returned',section_id=Books.query.filter_by(book_id=issue.book_id).first().section_id)
@@ -561,6 +605,8 @@ class HistoryBooks(Resource):
     method_decorators = {'get': [token_required]}
 
     def get(self,current_user):
+        if current_user.role == 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         history = History.query.filter_by(user_id=current_user.id).all()
         history_lst = []
         for h in history:
@@ -568,3 +614,96 @@ class HistoryBooks(Resource):
         return make_response(jsonify({'history': history_lst, 'status': 'success'}), 200)
     
 api.add_resource(HistoryBooks, '/history')
+
+class AdminBookRequested(Resource):
+    method_decorators = [token_required]
+
+    def get(self,current_user):
+        Issue.refresh()
+        if current_user.role != 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+        issues = Issue.query.all()
+        issues_lst = []
+        for issue in issues:
+            if issue.status != 'Requested':
+                continue
+            issue_temp =[issue.serialize()]
+            issue_temp.append(Books.query.filter_by(book_id=issue.book_id).first().short_serialize())
+            issue_temp.append(User.query.filter_by(id=issue.user_id).first().serialize())
+            issue_temp.append(Section.query.filter_by(section_id=Books.query.filter_by(book_id=issue.book_id).first().section_id).first().serialize())
+            issue_temp.append(Profile.query.filter_by(profile_id=User.query.filter_by(id=issue.user_id).first().profile_id).first().serialize())
+            issues_lst.append(issue_temp)
+        return make_response(jsonify({'issues': issues_lst, 'status': 'success','current_user': current_user.serialize()}), 200)
+    
+api.add_resource(AdminBookRequested, '/adminbookrequested')
+
+class RequestAccept(Resource):
+    method_decorators = [token_required]
+
+    def get(self,current_user,book_id):
+        if current_user.role != 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+        issue = Issue.query.filter_by(book_id=book_id, status='Requested').first()
+        if issue:
+            issue.status = 'Issued'
+            db.session.commit()
+            return make_response(jsonify({'message': 'Request accepted successfully', 'status': 'success'}), 200)
+        return make_response(jsonify({'message': 'Request not found', 'status': 'error'}), 404)
+    
+api.add_resource(RequestAccept, '/requestaccept/<int:book_id>')
+
+class RequestReject(Resource):
+    method_decorators = [token_required]
+
+    def get(self,current_user,book_id):
+        if current_user.role != 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+        issue = Issue.query.filter_by(book_id=book_id, status='Requested').first()
+        if issue:
+            history = History(book_id=issue.book_id, user_id=issue.user_id, date_issue=issue.date_issue, return_date=datetime.now(),status='Rejected',section_id=Books.query.filter_by(book_id=issue.book_id).first().section_id)
+            db.session.add(history)
+            db.session.delete(issue)
+            db.session.commit()
+            return make_response(jsonify({'message': 'Request rejected successfully', 'status': 'success'}), 200)
+        return make_response(jsonify({'message': 'Request not found', 'status': 'error'}), 404)
+    
+api.add_resource(RequestReject, '/requestreject/<int:book_id>')
+
+class RevokeAccess(Resource):
+    method_decorators = [token_required]
+
+    def get(self,current_user,book_id):
+        if current_user.role != 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+        issue = Issue.query.filter_by(book_id=book_id, status='Issued').first()
+        if issue:
+            history = History(book_id=issue.book_id, user_id=issue.user_id, date_issue=issue.date_issue, return_date=datetime.now(),status='Revoked',section_id=Books.query.filter_by(book_id=issue.book_id).first().section_id)
+            db.session.add(history)
+            db.session.delete(issue)
+            db.session.commit()
+            return make_response(jsonify({'message': 'Access revoked successfully', 'status': 'success'}), 200)
+        return make_response(jsonify({'message': 'Request not found', 'status': 'error'}), 404)
+    
+api.add_resource(RevokeAccess, '/revokeaccess/<int:book_id>')
+
+class AdminBookIssued(Resource):
+    method_decorators = [token_required]
+
+    def get(self,current_user):
+        Issue.refresh()
+        if current_user.role != 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+        issues = Issue.query.all()
+        issues_lst = []
+        for issue in issues:
+            if issue.status != 'Issued':
+                continue
+            issue_temp =[issue.serialize()]
+            issue_temp.append(Books.query.filter_by(book_id=issue.book_id).first().short_serialize())
+            issue_temp.append(User.query.filter_by(id=issue.user_id).first().serialize())
+            issue_temp.append(Section.query.filter_by(section_id=Books.query.filter_by(book_id=issue.book_id).first().section_id).first().serialize())
+            issue_temp.append(Profile.query.filter_by(profile_id=User.query.filter_by(id=issue.user_id).first().profile_id).first().serialize())
+            issues_lst.append(issue_temp)
+        return make_response(jsonify({'issues': issues_lst, 'status': 'success','current_user': current_user.serialize()}), 200)
+
+api.add_resource(AdminBookIssued, '/adminbookissued')

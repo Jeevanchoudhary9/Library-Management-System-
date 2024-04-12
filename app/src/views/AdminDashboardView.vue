@@ -684,7 +684,15 @@ export default {
         "x-access-token": token,
       },
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (response.status == 401) {
+          console.log("1");
+          this.$router.push("/unauthorized");
+        } else {
+          console.log("2");
+          return response.json();
+        }
+      })
       .then((data) => {
         console.log(data);
         if (data.status != "success") {
@@ -721,7 +729,15 @@ export default {
           description: description,
         }),
       })
-        .then((response) => response.json())
+        .then((response) => {
+          if (response.status == 401) {
+            console.log("1");
+            this.$router.push("/unauthorized");
+          } else {
+            console.log("2");
+            return response.json();
+          }
+        })
         .then((data) => {
           console.log(data);
           if (data.status != "success") {
@@ -751,7 +767,15 @@ export default {
           section_id: this.section_id,
         }),
       })
-        .then((response) => response.json())
+        .then((response) => {
+          if (response.status == 401) {
+            console.log("1");
+            this.$router.push("/unauthorized");
+          } else {
+            console.log("2");
+            return response.json();
+          }
+        })
         .then((data) => {
           console.log(data);
           if (data.status != "success") {
@@ -805,7 +829,15 @@ export default {
           section_id: id,
         }),
       })
-        .then((response) => response.json())
+        .then((response) => {
+          if (response.status == 401) {
+            console.log("1");
+            this.$router.push("/unauthorized");
+          } else {
+            console.log("2");
+            return response.json();
+          }
+        })
         .then((data) => {
           console.log(data);
           if (data.status != "success") {
@@ -844,7 +876,14 @@ export default {
       formData.append("title", this.formData.title);
 
       try {
-        const response = await axios.post(API_URL + "/add_books", formData);
+        const response = await axios.post(API_URL + "/add_books", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "x-access-token": localStorage.getItem(
+              "library_management_system_token"
+            ),
+          },
+        });
         if (response.data.status != "success") {
           alert(response.data.message);
         } else {
@@ -852,8 +891,12 @@ export default {
           window.location.reload();
         }
       } catch (error) {
-        alert(error.response.data.message);
-        console.error("Error uploading data:", error);
+        if (error.response.status == 401) {
+          this.$router.push("/unauthorized");
+        } else {
+          alert(error.response.data.message);
+          console.error("Error uploading data:", error);
+        }
       }
     },
     handleAnotherFileUpload() {
@@ -886,7 +929,14 @@ export default {
       formData.append("title", this.formData.title);
       console.log(this.formData);
       try {
-        const response = await axios.post(API_URL + "/edit_book", formData);
+        const response = await axios.post(API_URL + "/edit_book", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "x-access-token": localStorage.getItem(
+              "library_management_system_token"
+            ),
+          },
+        });
         // get message from backend
         if (response.data.status != "success") {
           alert(response.data.message);
@@ -895,6 +945,9 @@ export default {
           window.location.reload();
         }
       } catch (error) {
+        if (error.response.status == 401) {
+          this.$router.push("/unauthorized");
+        }
         alert(error.response.data.message);
         console.error("Error uploading data:", error);
       }
@@ -937,7 +990,15 @@ export default {
           book_id: bookid,
         }),
       })
-        .then((response) => response.json())
+        .then((response) => {
+          if (response.status == 401) {
+            console.log("1");
+            this.$router.push("/unauthorized");
+          } else {
+            console.log("2");
+            return response.json();
+          }
+        })
         .then((data) => {
           console.log(data);
           if (data.status != "success") {

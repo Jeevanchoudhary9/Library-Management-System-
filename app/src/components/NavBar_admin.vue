@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
-      <a class="navbar-brand d-flex align-items-center" href="/">
+      <a class="navbar-brand d-flex align-items-center" href="/admin_dashboard">
         <img
           src="@/assets/img/logo.jpeg"
           alt=""
@@ -24,25 +24,18 @@
                 class="nav-link active"
                 aria-current="page"
                 href="/admin_dashboard"
-                >Homesss</a
+                >Home</a
               >
             </li>
             <li
               class="nav-item mx-2 ps-md-4 border-start border-md border-gray"
             >
-              <a class="nav-link" href="/requested_books/Requested"
-                >Requested Books</a
-              >
+              <a class="nav-link" href="/adminbookissue">Requested Books</a>
             </li>
             <li
               class="nav-item mx-2 ps-md-4 border-start border-md border-gray"
             >
-              <a class="nav-link" href="/requested_books/Issued">My Books</a>
-            </li>
-            <li
-              class="nav-item mx-2 ps-md-4 border-start border-md border-gray"
-            >
-              <a class="nav-link" href="/history">History</a>
+              <a class="nav-link" href="/issuedbooks">Issued Books</a>
             </li>
             <li
               class="nav-item mx-2 ps-md-4 border-start border-md border-gray"

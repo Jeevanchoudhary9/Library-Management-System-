@@ -52,6 +52,21 @@ const routes = [
     component: () => import("../views/AdminDashboardView.vue"),
   },
   {
+    path: "/unauthorized",
+    name: "unauthorized",
+    component: () => import("../views/UnauthorizedView.vue"),
+  },
+  {
+    path: "/adminbookissue",
+    name: "adminbookissue",
+    component: () => import("../views/AdminBookIssueView.vue"),
+  },
+  {
+    path: "/issuedbooks",
+    name: "issuedbooks",
+    component: () => import("../views/IssuedBooksView.vue"),
+  },
+  {
     path: "/logout",
     name: "logout",
     component: () => import("../views/LogoutView.vue"),

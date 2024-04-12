@@ -60,8 +60,35 @@ export default {
 
       try {
         // Send a POST request to the API endpoint
-        await axios.post(API_URL + "/addbooks", formData); // Adjust the URL as per your backend API
-        alert("Data uploaded successfully!");
+        const token = localStorage.getItem("library_management_system_token");
+        try {
+          const response = await axios.post(API_URL + "/add_books", formData, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              "x-access-token": token,
+            },
+          });
+
+          // Log response for debugging
+
+          // Check for response status and handle accordingly
+          if (response.data.status !== "success") {
+            // Unauthorized or other error status
+            console.log("Error:", response.data.message);
+            localStorage.removeItem("library_management_system_token");
+            this.$router.push("/signin");
+          } else {
+            // Success response
+            console.log("Success:", response.data.message);
+            alert(response.data.message);
+          }
+        } catch (error) {
+          if (error.response.status == 401) {
+            this.$router.push("/unauthorized");
+          }
+          console.error("Error uploading data:", error);
+          // Handle network errors or other errors here
+        }
       } catch (error) {
         console.error("Error uploading data:", error);
       }

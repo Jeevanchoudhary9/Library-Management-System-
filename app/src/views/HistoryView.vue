@@ -54,7 +54,9 @@
             <a
               :class="{
                 'btn btn-success mb-1': book.status === 'Returned',
-                'btn btn-danger mb-1': book.status !== 'Returned',
+                'btn btn-warning mb-1': book.status === 'Overdue',
+                'btn btn-danger mb-1': book.status === 'Rejected',
+                'btn btn-info mb-1': book.status === 'Revoked',
               }"
               :href="book_path(book.book_id)"
               :style="{ maxWidth: '210px', minWidth: '150px' }"
@@ -98,7 +100,14 @@ export default {
         "x-access-token": token,
       },
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (response.status == 401) {
+          this.$router.push("/unauthorized");
+        } else {
+          console.log("2");
+          return response.json();
+        }
+      })
       .then((data) => {
         console.log(data);
         if (data.history.length === 0) {
@@ -111,7 +120,6 @@ export default {
       })
       .catch((error) => {
         console.error("Error:", error);
-        this.$router.push("/signin");
       });
   },
   methods: {
