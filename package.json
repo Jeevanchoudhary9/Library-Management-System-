@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "bootstrap": "^5.3.3",
+    "chart.js": "^3.9.1",
     "vue-resize-directive": "^1.2.0"
   }
 }

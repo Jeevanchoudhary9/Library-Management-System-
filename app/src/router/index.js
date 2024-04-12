@@ -67,6 +67,16 @@ const routes = [
     component: () => import("../views/IssuedBooksView.vue"),
   },
   {
+    path: "/adminsummary",
+    name: "adminsummary",
+    component: () => import("../views/AdminSummaryView.vue"),
+  },
+  {
+    path: "/usersummary",
+    name: "usersummary",
+    component: () => import("../views/UserSummaryView.vue"),
+  },
+  {
     path: "/logout",
     name: "logout",
     component: () => import("../views/LogoutView.vue"),

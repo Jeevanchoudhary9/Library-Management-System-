@@ -43,22 +43,23 @@
 
             <!-- Text -->
             <div class="row">
-                <div class="col">
-            <div class="fs-sm text-muted">
-                <b>Username:</b> {{ book[2].username }} <br />
-              <b>Name:</b> {{ book[4].firstname }} {{ book[4].lastname }}<br />
-              <b>Email:</b> {{ book[4].email }} <br />
-              <b>Phone:</b> {{ book[4].phone }} <br />
+              <div class="col">
+                <div class="fs-sm text-muted">
+                  <b>Username:</b> {{ book[2].username }} <br />
+                  <b>Name:</b> {{ book[4].firstname }} {{ book[4].lastname
+                  }}<br />
+                  <b>Email:</b> {{ book[4].email }} <br />
+                  <b>Phone:</b> {{ book[4].phone }} <br />
+                </div>
               </div>
-            </div>
-            <div class="col">
-            <div class="fs-sm text-muted">
-              <b>Author:</b> {{ book[1].author }} <br />
-              <b>Section:</b> {{ book[3].section_name }} <br />
-              <b>Issue Date:</b> {{ book[0].date_issue }} <br />
-              <b>Return Date:</b> {{ book[0].return_date }} <br />
-            </div>
-            </div>
+              <div class="col">
+                <div class="fs-sm text-muted">
+                  <b>Author:</b> {{ book[1].author }} <br />
+                  <b>Section:</b> {{ book[3].section_name }} <br />
+                  <b>Issue Date:</b> {{ book[0].date_issue }} <br />
+                  <b>Return Date:</b> {{ book[0].return_date }} <br />
+                </div>
+              </div>
             </div>
           </div>
           <div class="col-4">
@@ -69,7 +70,7 @@
               :style="{ maxWidth: '210px', minWidth: '150px' }"
             >
               Accept Request
-          </button>
+            </button>
             <!-- <a
               :class="{
                 'btn btn-success mb-1': book[0].status === 'Returned',
@@ -155,8 +156,8 @@ export default {
           }
         })
         .then((data) => {
-            alert(data.message);
-            window.location.reload();
+          alert(data.message);
+          window.location.reload();
         })
         .catch((error) => {
           console.error("Error:", error);
@@ -179,8 +180,8 @@ export default {
           }
         })
         .then((data) => {
-            alert(data.message);
-            window.location.reload();
+          alert(data.message);
+          window.location.reload();
         })
         .catch((error) => {
           console.error("Error:", error);

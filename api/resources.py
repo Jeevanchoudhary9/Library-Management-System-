@@ -707,3 +707,64 @@ class AdminBookIssued(Resource):
         return make_response(jsonify({'issues': issues_lst, 'status': 'success','current_user': current_user.serialize()}), 200)
 
 api.add_resource(AdminBookIssued, '/adminbookissued')
+
+class AdminSummary(Resource):
+    method_decorators = [token_required]
+
+    def get(self,current_user):
+        if current_user.role != 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+        books=Books.query.all()
+        books_lst=[]
+        books_count=[]
+        sections_count=[]
+        sections_name=[]
+        status_count=[]
+        status_name=[]
+        for book in books:
+            books_lst.append(book.book_name)
+            books_count.append(History.query.filter_by(book_id=book.book_id).count())
+        for section in Section.query.all():
+            sections_name.append(section.section_name)
+            sections_count.append(History.query.filter_by(section_id=section.section_id).count())
+
+        for books in History.query.all():
+            if books.status in status_name:
+                continue
+            status_name.append(History.query.filter_by(status=books.status).first().status)
+            status_count.append(History.query.filter_by(status=books.status).count())
+        print(status_count,status_name)
+        
+        return make_response(jsonify({'books': books_lst, 'books_count': books_count, 'status': 'success','current_user': current_user.serialize(),'sections_count': sections_count,'sections_name': sections_name,'status_name':status_name,'status_count':status_count}), 200)
+api.add_resource(AdminSummary, '/adminsummary')
+
+class UserSummary(Resource):
+    method_decorators = [token_required]
+
+    def get(self,current_user):
+        if current_user.role == 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+        books=Books.query.all()
+        books_lst=[]
+        books_count=[]
+        sections_count=[]
+        sections_name=[]
+        status_count=[]
+        status_name=[]
+        for book in books:
+            if History.query.filter_by(book_id=book.book_id,user_id=current_user.id).count()!=0:
+                books_lst.append(book.book_name)
+                books_count.append(History.query.filter_by(book_id=book.book_id,user_id=current_user.id).count())
+        for section in Section.query.all():
+            if History.query.filter_by(section_id=section.section_id,user_id=current_user.id).count()!=0:
+                sections_name.append(section.section_name)
+                sections_count.append(History.query.filter_by(section_id=section.section_id,user_id=current_user.id).count())
+        for books in History.query.all():
+            if books.status in status_name:
+                continue
+            status_name.append(History.query.filter_by(status=books.status,user_id=current_user.id).first().status)
+            status_count.append(History.query.filter_by(status=books.status,user_id=current_user.id).count())
+        print(status_count,status_name)
+        
+        return make_response(jsonify({'books': books_lst, 'books_count': books_count, 'status': 'success','current_user': current_user.serialize(),'sections_count': sections_count,'sections_name': sections_name,'status_name':status_name,'status_count':status_count}), 200)
+api.add_resource(UserSummary, '/usersummary')
