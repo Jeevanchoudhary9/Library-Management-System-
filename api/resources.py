@@ -181,7 +181,6 @@ class adminDashboard(Resource):
                 books_temp.append(book.serialize())
             temp=[section_temp,books_temp]
             section_lst.append(temp)
-        print(section_lst[0][1][0]['book_id'])
         return make_response(jsonify({'message': 'Welcome to the admin\'s dashboard!','user_data': current_user.serialize(),'section': section_lst, 'status': 'success'}), 200)
 
                 
@@ -212,7 +211,6 @@ class fetchbookimg(Resource):
     def get(self, book_id):
         book = Books.query.filter_by(book_id=book_id).first()
         if book:
-            print("ok")
             return Response(book.image, mimetype="image/jpeg")
         return make_response(jsonify({'message': 'Book not found!', 'status': 'error'}), 404)
     
@@ -276,7 +274,6 @@ class EditBook(Resource):
     def post(self, current_user):
         if current_user.role != 'admin':
             return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
-        print("get request")
         if request.files:
             # Handle file upload
             image_file = request.files['image']
@@ -313,7 +310,6 @@ class EditBook(Resource):
                 if len(book_data['description'].split())>300 or sum(c.isalpha() for c in book_data['description']) >1600:
                     return make_response(jsonify({'message': 'Description should not exceed 300 words or 1600 characters', 'status': 'error'}), 400)
                 for book in Books.query.all():
-                    print(book.book_name)
                     if book.book_name == book_data['book_name'] and book.book_id != book_data['book_id']:
                         return make_response(jsonify({'message': 'Book already exists', 'status': 'error'}), 409)
                 book.book_name = book_data['book_name']
@@ -338,7 +334,6 @@ class AddSection(Resource):
         if current_user.role != 'admin':
             return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         data = request.json
-        print(data)
         try:
             if data['section_name'] == "" or data['description'] == "":
                 return make_response(jsonify({'message': 'All fields are required', 'status': 'error'}), 400)
@@ -466,9 +461,6 @@ class RequestBook(Resource):
                 return make_response(jsonify({'message': 'Your Request for edit is successful', 'status': 'success'}), 200)
             if Issue.query.filter_by(user_id=current_user.id).count() >= 5:
                 return make_response(jsonify({'message': 'You have reached the maximum limit of 5 books', 'status': 'error'}), 400)
-            print(current_user)
-            print(data)
-            print(data['book_id'],data['period'],data['unit'])
             try:
                 data['period']=int(data['period'])
             except:
@@ -491,7 +483,6 @@ class RequestBook(Resource):
             else:
                 return make_response(jsonify({'message': 'Invalid unit', 'status': 'error'}), 400)
             
-            print(return_date)
             
             issue = Issue(book_id=data['book_id'], user_id=current_user.id, date_issue=datetime.now(), return_date=return_date, status='Requested')
             db.session.add(issue)
@@ -733,7 +724,6 @@ class AdminSummary(Resource):
                 continue
             status_name.append(History.query.filter_by(status=books.status).first().status)
             status_count.append(History.query.filter_by(status=books.status).count())
-        print(status_count,status_name)
         
         return make_response(jsonify({'books': books_lst, 'books_count': books_count, 'status': 'success','current_user': current_user.serialize(),'sections_count': sections_count,'sections_name': sections_name,'status_name':status_name,'status_count':status_count}), 200)
 api.add_resource(AdminSummary, '/adminsummary')
@@ -764,7 +754,6 @@ class UserSummary(Resource):
                 continue
             status_name.append(History.query.filter_by(status=books.status,user_id=current_user.id).first().status)
             status_count.append(History.query.filter_by(status=books.status,user_id=current_user.id).count())
-        print(status_count,status_name)
         
         return make_response(jsonify({'books': books_lst, 'books_count': books_count, 'status': 'success','current_user': current_user.serialize(),'sections_count': sections_count,'sections_name': sections_name,'status_name':status_name,'status_count':status_count}), 200)
 api.add_resource(UserSummary, '/usersummary')
