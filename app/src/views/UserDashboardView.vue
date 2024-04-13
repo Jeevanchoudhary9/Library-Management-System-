@@ -1,7 +1,33 @@
 <template>
   <div class="home vh-100 bg-image">
     <NavBar msg="Welcome to Library Management System" />
-    <h1>User Dashboard</h1>
+    <div class="input-group"></div>
+    <h3 style="margin-top: 20px">Welcome to World of Books!</h3>
+    <div
+      class="row justify-content-center"
+      style="margin-right: 20px; margin-left: 20px; margin-bottom: 20px"
+    >
+      <div class="col-10">
+        <input
+          type="search"
+          class="form-control rounded"
+          placeholder="Search"
+          aria-label="Search"
+          aria-describedby="search-addon"
+        />
+      </div>
+      <div class="col-1">
+        <button
+          v-on:click="search()"
+          type="button"
+          class="btn btn-outline-primary w-100"
+          data-mdb-ripple-init
+        >
+          Search
+        </button>
+      </div>
+    </div>
+
     <!-- <li v-for="section in data.books_lst_section" :key="section.id">
       <li v-for="books in section">{{ books }}--------------------</li>
     </li> -->
@@ -149,6 +175,10 @@ export default {
   methods: {
     fetchbookimg(bookId) {
       return API_URL + "/fetchbookimg/" + bookId;
+    },
+    search() {
+      const searchText = document.querySelector('input[type="search"]').value;
+      this.$router.push("/search/" + searchText);
     },
   },
 };

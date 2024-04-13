@@ -59,10 +59,10 @@
         <!-- last col -->
         <div class="card mx-2" style="width: 100%">
           <div class="card-body">
-            <h5 class="card-title">Card title</h5>
+            <h5 class="card-title">Request for Book</h5>
             <p class="card-text">
-              3 Some quick example text to build on the card title and make up
-              the bulk of the card's content.
+              Request for the book to read it. The book will be available for
+              you to read for the period of time you requested after approval.
             </p>
             <!-- <a
               :href="'/request_book/' + 1"
@@ -86,6 +86,15 @@
               class="btn fw-medium d align-items-center justify-content-center"
               style="background-color: gray; border-radius: 20px; color: white"
               v-on:click="cancel_request()"
+            >
+              {{ status }}
+            </button>
+            <button
+              type="button"
+              :hidden="status !== 'Return Book'"
+              class="btn btn-info fw-medium d align-items-center justify-content-center"
+              style="border-radius: 20px; color: black"
+              v-on:click="return_request(this.$route.params.id)"
             >
               {{ status }}
             </button>
@@ -373,9 +382,13 @@ export default {
           this.$store.commit("setUser", data.user_data.username);
           this.$store.commit("setNav", "books");
           this.data = data;
+          console.log(data);
           this.current_book = data.current_book;
           if (data.issue == "Requested") {
             this.status = "Cancel Request";
+          }
+          if (data.issue == "Issued") {
+            this.status = "Return Book";
           }
         }
         console.log(data);
@@ -466,6 +479,42 @@ export default {
           });
       } catch (error) {
         console.error("Error fetching data:", error);
+      }
+    },
+    return_request(id) {
+      try {
+        let data = {
+          book_id: id,
+        };
+        const token = localStorage.getItem("library_management_system_token");
+        fetch(API_URL + "/return_book", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-access-token": token,
+          },
+          body: JSON.stringify(data),
+        })
+          .then((response) => {
+            if (response.status == 401) {
+              this.$router.push("/unauthorized");
+            } else {
+              return response.json();
+            }
+          })
+          .then((data) => {
+            if (data.status !== "success") {
+              alert(data.message);
+            } else {
+              alert(data.message);
+              window.location.reload();
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching data4:", error);
+          });
+      } catch (error) {
+        console.error("Error fetching data5:", error);
       }
     },
     cancel_request() {
