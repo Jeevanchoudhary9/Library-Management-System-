@@ -11,7 +11,6 @@ import jwt
 from config import DevelopmentConfig
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash,check_password_hash
-import demo
 
 
 api=Api(prefix='/api')
