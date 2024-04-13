@@ -27,6 +27,23 @@ const routes = [
     component: () => import("../views/BookView.vue"),
   },
   {
+    path: "/adminbook/:id",
+    name: "adminbook",
+    component: () => import("../views/AdminBookView.vue"),
+  },
+  {
+    path: "/search/:search",
+    name: "search",
+    component: () => import("../views/SearchView.vue"),
+    beforeEnter: (to, from, next) => {
+      if (to.params.search === "") {
+        next({ name: "userdashboard" }); // Redirect to dashboard route
+      } else {
+        next(); // Continue navigation
+      }
+    },
+  },
+  {
     path: "/request/:id",
     name: "request_book",
     component: () => import("../views/RequestedBooksView.vue"),

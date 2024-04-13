@@ -135,7 +135,7 @@
                 </div>
                 <a
                   class=""
-                  :href="'/book/' + books.book_id"
+                  :href="'/adminbook/' + books.book_id"
                   style="text-decoration: none"
                 >
                   <img

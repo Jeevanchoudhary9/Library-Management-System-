@@ -1,6 +1,6 @@
 <template>
   <div>
-    <NavBar_admin msg="Welcome to Your Vue.js App" />
+    <NavBar msg="Welcome to Your Vue.js App" />
     <div style="display: flex; justify-content: flex-end; margin-bottom: 20px">
       <button
         @click="printPage"
@@ -47,14 +47,14 @@
 </template>
 
 <script>
-import NavBar_admin from "@/components/NavBar_admin.vue";
+import NavBar from "@/components/NavBar.vue";
 import Chart from "chart.js/auto";
 import { API_URL } from "../../constants";
 
 export default {
   name: "AdminSummaryView",
   components: {
-    NavBar_admin,
+    NavBar,
   },
   beforeCreate() {
     const token = localStorage.getItem("library_management_system_token");

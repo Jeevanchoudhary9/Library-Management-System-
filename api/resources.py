@@ -11,6 +11,10 @@ import jwt
 from config import DevelopmentConfig
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash,check_password_hash
+import json
+import redis
+
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
 
 
 api=Api(prefix='/api')
@@ -129,33 +133,66 @@ class Login(Resource):
 
 api.add_resource(Login, '/login')
 
+
+
 class Dashboard(Resource):
     method_decorators = {'get': [token_required]}
 
     def get(self, current_user):
-        if current_user.role == 'admin':
-            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
-        books = Books.query.all()
-        books_lst=[]
-        for book in books:
-            books_lst.append(book.serialize())
-
-        books_lst_section = []
-        sections = Section.query.all()
-        for section in sections:
-            books=Books.query.filter_by(section_id=section.section_id).all()
-            if len(books)==0:
-                continue
-            books_temp=[]
+        res = redis_client.get('dashboard')
+        if not res:
+            if current_user.role == 'admin':
+                return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+            books = Books.query.all()
+            books_lst=[]
             for book in books:
                 temp = book.serialize()
-                temp['section_name'] = section.section_name
-                books_temp.append(temp)
-            books_lst_section.append(books_temp)
+                temp["date_issue"] = book.date_issue.strftime("%Y-%m-%d %H:%M:%S")
+                books_lst.append(temp)
 
-        return make_response(jsonify({'message': 'Welcome to the dashboard!','user_data': current_user.serialize(),'books': books_lst,'books_lst_section':books_lst_section, 'status': 'success'}), 200)
+            books_lst_section = []
+            sections = Section.query.all()
+            for section in sections:
+                books=Books.query.filter_by(section_id=section.section_id).all()
+                if len(books)==0:
+                    continue
+                books_temp=[]
+                for book in books:
+                    temp = book.serialize()
+                    temp['section_name'] = section.section_name
+                    temp["date_issue"] = book.date_issue.strftime("%Y-%m-%d %H:%M:%S")
+                    books_temp.append(temp)
+                books_lst_section.append(books_temp)
+            dashboard = {'message': 'Welcome to the dashboard!',
+                                      'user_data': current_user.serialize(),
+                                      'books': books_lst,
+                                      'books_lst_section':books_lst_section,
+                                      'status': 'success'}
+            redis_client.set("dashboard", json.dumps(dashboard))
+            redis_client.expire("dashboard", timedelta(hours=6))
+        else:
+            dashboard = json.loads(res)
+            if dashboard['user_data']['role'] != current_user.role:
+                return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+
+        return make_response(jsonify(dashboard), 200)
 
 api.add_resource(Dashboard, '/dashboard')
+
+class Search(Resource):
+    method_decorators = {'get': [token_required]}
+
+    def get(self, current_user, search):
+        books = Books.query.filter(Books.book_name.ilike('%'+search+'%')).all()
+        books_lst=[]
+        for book in books:
+            temp = book.serialize()
+            temp["section_name"]=Section.query.filter_by(section_id=book.section_id).first().section_name
+            temp["date_issue"] = book.date_issue.strftime("%Y-%m-%d %H:%M:%S")
+            books_lst.append(temp)
+        return make_response(jsonify({'books': books_lst, 'status': 'success','user_data': current_user.serialize()}), 200)
+
+api.add_resource(Search, '/search/<string:search>')
 
 class VerifyUser(Resource):
     method_decorators = {'get': [token_required]}
@@ -206,6 +243,29 @@ class Book(Resource):
         return make_response(jsonify({'message': 'Book not found!', 'status': 'error'}), 404)
 
 api.add_resource(Book, '/book/<int:book_id>')
+
+class AdminBook(Resource):
+    method_decorators = {'get': [token_required]}
+    def get(self,current_user,book_id):
+        if current_user.role != 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+        book_obj = Books.query.filter_by(book_id=book_id).first()
+        books=Books.query.filter_by(section_id=book_obj.section_id).all()
+        try:
+            issue=Issue.query.filter_by(book_id=book_id, user_id=current_user.id).first().status
+        except:
+            issue=None
+        books_lst=[]
+        for book in books:
+            if book.book_id != book_id:
+                books_lst.append(book.serialize())
+        if book_obj:
+            return make_response(jsonify({'current_book': book_obj.serialize(),'issue': issue,'user_data': current_user.serialize(), 'status': 'success','books': books_lst}), 200)
+        return make_response(jsonify({'message': 'Book not found!', 'status': 'error'}), 404)
+
+api.add_resource(AdminBook, '/adminbook/<int:book_id>')
+
+
 
 class fetchbookimg(Resource):
     def get(self, book_id):
@@ -262,6 +322,8 @@ class AddBooks(Resource):
                 
                 db.session.add(book)
                 db.session.commit()
+                redis_client.delete('adminsummary')
+                redis_client.delete('dashboard')
                 return make_response(jsonify({'message': 'Book added successfully', 'status': 'success'}), 201)
             except Exception as e:
                 db.session.rollback()
@@ -296,6 +358,8 @@ class EditBook(Resource):
                 book.description = book_data['description']
                 book.title = book_data['title']
                 db.session.commit()
+                redis_client.delete('dashboard')
+                redis_client.delete('adminsummary')
                 return make_response(jsonify({'message': 'Book added successfully', 'status': 'success'}), 201)
             except Exception as e:
                 db.session.rollback()
@@ -319,6 +383,8 @@ class EditBook(Resource):
                 book.description = book_data['description']
                 book.title = book_data['title']
                 db.session.commit()
+                redis_client.delete('dashboard')
+                redis_client.delete('adminsummary')
                 return make_response(jsonify({'message': 'Book Edited successfully', 'status': 'success'}), 201)
             except Exception as e:
                 db.session.rollback()
@@ -347,6 +413,8 @@ class AddSection(Resource):
             section = Section(section_name=data['section_name'], date_created=datetime.now(), description=data['description'])
             db.session.add(section)
             db.session.commit()
+            redis_client.delete('dashboard')
+            redis_client.delete('adminsummary')
             return make_response(jsonify({'message': 'Section added successfully', 'status': 'success'}), 201)
         except Exception as e:
             db.session.rollback()
@@ -367,6 +435,8 @@ class EditSection(Resource):
                 section.section_name = data['section_name']
                 section.description = data['description']
                 db.session.commit()
+                redis_client.delete('dashboard')
+                redis_client.delete('adminsummary')
                 return make_response(jsonify({'message': 'Section updated successfully', 'status': 'success'}), 200)
             return make_response(jsonify({'message': 'Section not found', 'status': 'error'}), 404)
         except Exception as e:
@@ -391,6 +461,8 @@ class DeleteSection(Resource):
                         db.session.delete(book)
                 db.session.delete(section)
                 db.session.commit()
+                redis_client.delete('dashboard')
+                redis_client.delete('adminsummary')
                 return make_response(jsonify({'message': 'Section deleted successfully', 'status': 'success'}), 200)
             return make_response(jsonify({'message': 'Section not found', 'status': 'error'}), 404)
         except Exception as e:
@@ -411,6 +483,8 @@ class DeleteBook(Resource):
             if book:
                 db.session.delete(book)
                 db.session.commit()
+                redis_client.delete('dashboard')
+                redis_client.delete('adminsummary')
                 return make_response(jsonify({'message': 'Book deleted successfully', 'status': 'success'}), 200)
             return make_response(jsonify({'message': 'Book not found', 'status': 'error'}), 404)
         except Exception as e:
@@ -456,7 +530,7 @@ class RequestBook(Resource):
                 issue.return_date = return_date
                 issue.status = 'Requested'
                 db.session.commit()
-
+                redis_client.delete('adminsummary')
 
                 return make_response(jsonify({'message': 'Your Request for edit is successful', 'status': 'success'}), 200)
             if Issue.query.filter_by(user_id=current_user.id).count() >= 5:
@@ -506,6 +580,7 @@ class CancelRequest(Resource):
             if issue:
                 db.session.delete(issue)
                 db.session.commit()
+                redis_client.delete('adminsummary')
                 return make_response(jsonify({'message': 'Request cancelled successfully', 'status': 'success'}), 200)
             return make_response(jsonify({'message': 'Request not found', 'status': 'error'}), 404)
         except Exception as e:
@@ -528,6 +603,7 @@ class RequestedBooks(Resource):
                 issue_temp =[issue.serialize()]
                 issue_temp.append(Books.query.filter_by(book_id=issue.book_id).first().short_serialize())
                 issues_lst.append(issue_temp)
+        redis_client.delete('adminsummary')
         return make_response(jsonify({'requested_books': issues_lst, 'status': 'success', 'current_user': current_user.serialize()}), 200)
 
 api.add_resource(RequestedBooks, '/requested_books/<string:status>')
@@ -546,6 +622,7 @@ class ReturnBook(Resource):
                 history = History(book_id=data['book_id'], user_id=current_user.id, date_issue=issue.date_issue, return_date=datetime.now(),status='Returned',section_id=Books.query.filter_by(book_id=data['book_id']).first().section_id)
                 db.session.add(history)
                 db.session.commit()
+                redis_client.delete('adminsummary')
                 return make_response(jsonify({'message': 'Book returned successfully', 'status': 'success'}), 200)
             return make_response(jsonify({'message': 'Book not found', 'status': 'error'}), 404)
         except Exception as e:
@@ -565,6 +642,7 @@ class CancelAllRequests(Resource):
             for issue in issues:
                 db.session.delete(issue)
                 db.session.commit()
+            redis_client.delete('adminsummary')
             return make_response(jsonify({'message': 'All requests cancelled successfully', 'status': 'success'}), 200)
         except Exception as e:
             db.session.rollback()
@@ -585,6 +663,7 @@ class ReturnAllBooks(Resource):
                 db.session.delete(issue)
                 db.session.add(history)
                 db.session.commit()
+            redis_client.delete('adminsummary')
             return make_response(jsonify({'message': 'All books returned successfully', 'status': 'success'}), 200)
         except Exception as e:
             db.session.rollback()
@@ -638,6 +717,7 @@ class RequestAccept(Resource):
         if issue:
             issue.status = 'Issued'
             db.session.commit()
+            redis_client.delete('adminsummary')
             return make_response(jsonify({'message': 'Request accepted successfully', 'status': 'success'}), 200)
         return make_response(jsonify({'message': 'Request not found', 'status': 'error'}), 404)
     
@@ -655,6 +735,7 @@ class RequestReject(Resource):
             db.session.add(history)
             db.session.delete(issue)
             db.session.commit()
+            redis_client.delete('adminsummary')
             return make_response(jsonify({'message': 'Request rejected successfully', 'status': 'success'}), 200)
         return make_response(jsonify({'message': 'Request not found', 'status': 'error'}), 404)
     
@@ -672,6 +753,7 @@ class RevokeAccess(Resource):
             db.session.add(history)
             db.session.delete(issue)
             db.session.commit()
+            redis_client.delete('adminsummary')
             return make_response(jsonify({'message': 'Access revoked successfully', 'status': 'success'}), 200)
         return make_response(jsonify({'message': 'Request not found', 'status': 'error'}), 404)
     
@@ -703,29 +785,46 @@ class AdminSummary(Resource):
     method_decorators = [token_required]
 
     def get(self,current_user):
-        if current_user.role != 'admin':
-            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
-        books=Books.query.all()
-        books_lst=[]
-        books_count=[]
-        sections_count=[]
-        sections_name=[]
-        status_count=[]
-        status_name=[]
-        for book in books:
-            books_lst.append(book.book_name)
-            books_count.append(History.query.filter_by(book_id=book.book_id).count())
-        for section in Section.query.all():
-            sections_name.append(section.section_name)
-            sections_count.append(History.query.filter_by(section_id=section.section_id).count())
+        res = redis_client.get('adminsummary')
+        if not res:
+            if current_user.role != 'admin':
+                return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+            books=Books.query.all()
+            books_lst=[]
+            books_count=[]
+            sections_count=[]
+            sections_name=[]
+            status_count=[]
+            status_name=[]
+            for book in books:
+                books_lst.append(book.book_name)
+                books_count.append(History.query.filter_by(book_id=book.book_id).count())
+            for section in Section.query.all():
+                sections_name.append(section.section_name)
+                sections_count.append(History.query.filter_by(section_id=section.section_id).count())
 
-        for books in History.query.all():
-            if books.status in status_name:
-                continue
-            status_name.append(History.query.filter_by(status=books.status).first().status)
-            status_count.append(History.query.filter_by(status=books.status).count())
+            for books in History.query.all():
+                if books.status in status_name:
+                    continue
+                status_name.append(History.query.filter_by(status=books.status).first().status)
+                status_count.append(History.query.filter_by(status=books.status).count())
+            adminsummary = {'books': books_lst, 
+                            'books_count': books_count, 
+                            'status': 'success',
+                            'current_user': current_user.serialize(),
+                            'sections_count': sections_count,
+                            'sections_name': sections_name,
+                            'status_name':status_name,
+                            'status_count':status_count}
+            
+            redis_client.set("adminsummary", json.dumps(adminsummary))
+            redis_client.expire("adminsummary", timedelta(hours=6))
+        else:
+            adminsummary = json.loads(res)
+            if adminsummary['current_user']['role'] != current_user.role:
+                return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         
-        return make_response(jsonify({'books': books_lst, 'books_count': books_count, 'status': 'success','current_user': current_user.serialize(),'sections_count': sections_count,'sections_name': sections_name,'status_name':status_name,'status_count':status_count}), 200)
+        return make_response(jsonify(adminsummary), 200)
 api.add_resource(AdminSummary, '/adminsummary')
 
 class UserSummary(Resource):

@@ -42,6 +42,11 @@
             <li
               class="nav-item mx-2 ps-md-4 border-start border-md border-gray"
             >
+              <a class="nav-link" href="/usersummary">Summary</a>
+            </li>
+            <li
+              class="nav-item mx-2 ps-md-4 border-start border-md border-gray"
+            >
               <a class="nav-link" href="/logout">Logout</a>
             </li>
           </ul>
