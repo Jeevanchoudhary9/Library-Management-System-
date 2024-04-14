@@ -16,7 +16,6 @@ import redis
 
 redis_client = redis.Redis(host='localhost', port=6379, db=0)
 
-
 api=Api(prefix='/api')
 
 def token_required(f):
@@ -140,6 +139,7 @@ class Dashboard(Resource):
 
     def get(self, current_user):
         res = redis_client.get('dashboard')
+        print(Profile.query.filter_by(profile_id=current_user.profile_id).first().email)
         if not res:
             if current_user.role == 'admin':
                 return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
