@@ -1,7 +1,10 @@
 import base64
 from functools import wraps
 import os
+import threading
 import uuid
+import smtplib
+import celery
 from flask import Response, app, jsonify, make_response, request, send_file
 from flask_cors import cross_origin
 from flask_restful import Resource, Api, reqparse,fields,marshal_with
@@ -17,6 +20,25 @@ import redis
 redis_client = redis.Redis(host='localhost', port=6379, db=0)
 
 api=Api(prefix='/api')
+# from main import send_email
+def send_email(receiver_email, subject, message):
+    try:
+        # Construct the email content
+        text = f"Subject: {subject}\n\n{message}"
+
+        # Connect to the SMTP server
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+
+            # Login to the SMTP server
+            server.login('librarymanagementsystem00@gmail.com', 'sdttvofezmtkgcep')
+
+            # Send the email
+            server.sendmail('librarymanagementsystem00@gmail.com', receiver_email, text)
+            print('Email sent successfully.')
+
+    except Exception as e:
+        print('Failed to send email:', e)
 
 def token_required(f):
     @wraps(f)
@@ -127,6 +149,15 @@ class Login(Resource):
         if check_password_hash(user.password, password):
             token = jwt.encode({'public_id': user.public_id, 'exp': datetime.utcnow(
             ) + timedelta(minutes=30)}, DevelopmentConfig.SECRET_KEY, algorithm="HS256")
+
+            email = Profile.query.filter_by(profile_id=user.profile_id).first().email
+            print(email)
+            subject = "Login"
+            body = "You have Logged in"
+
+            # Start a new thread to send the email
+            thread = threading.Thread(target=send_email, args=(email, subject, body))
+            thread.start()
             return make_response(jsonify({'token': token, 'user_data': user.serialize(), 'status': 'success'}), 200)
         return make_response(jsonify({'message': 'Incorrect password!', 'status': 'error'}), 401)
 
@@ -138,6 +169,25 @@ class Dashboard(Resource):
     method_decorators = {'get': [token_required]}
 
     def get(self, current_user):
+        print(current_user)
+        # send_email(Profile.query.filter_by(profile_id=current_user.profile_id).first().email, "Login", "You have Logged in")
+
+        # email = Profile.query.filter_by(profile_id=current_user.profile_id).first().email
+        # print(email)
+        # subject = "Login"
+        # body = "You have Logged in"
+
+        # # Start a new thread to send the email
+        # thread = threading.Thread(target=send_email, args=(email, subject, body))
+        # thread.start()
+
+        # send_email(Profile.query.filter_by(profile_id=current_user.profile_id).first().email, "Monthly Report", "monthly_report_template")
+        # msg_title = "Monthly Report"
+        # sender = 'noreply@librarymanagementsystem.com'
+        # msg = Message(msg_title, sender=sender, recipients=[Profile.query.filter_by(profile_id=current_user.profile_id).first().email])
+        # mail.send(msg)
+
+
         res = redis_client.get('dashboard')
         print(Profile.query.filter_by(profile_id=current_user.profile_id).first().email)
         if not res:
@@ -163,18 +213,21 @@ class Dashboard(Resource):
                     temp["date_issue"] = book.date_issue.strftime("%Y-%m-%d %H:%M:%S")
                     books_temp.append(temp)
                 books_lst_section.append(books_temp)
+            print(current_user.serialize())
             dashboard = {'message': 'Welcome to the dashboard!',
-                                      'user_data': current_user.serialize(),
                                       'books': books_lst,
                                       'books_lst_section':books_lst_section,
                                       'status': 'success'}
             redis_client.set("dashboard", json.dumps(dashboard))
             redis_client.expire("dashboard", timedelta(hours=6))
+            dashboard['user_data'] = current_user.serialize()
         else:
             dashboard = json.loads(res)
+            print("redis working")
             if dashboard['user_data']['role'] != current_user.role:
                 return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
 
+        dashboard['user_data'] = current_user.serialize()
         return make_response(jsonify(dashboard), 200)
 
 api.add_resource(Dashboard, '/dashboard')
@@ -856,3 +909,4 @@ class UserSummary(Resource):
         
         return make_response(jsonify({'books': books_lst, 'books_count': books_count, 'status': 'success','current_user': current_user.serialize(),'sections_count': sections_count,'sections_name': sections_name,'status_name':status_name,'status_count':status_count}), 200)
 api.add_resource(UserSummary, '/usersummary')
+
