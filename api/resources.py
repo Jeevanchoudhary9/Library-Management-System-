@@ -6,7 +6,7 @@ import os
 import threading
 import uuid
 import smtplib
-from flask import Response, app, jsonify, make_response, request, send_file
+from flask import Response, app, jsonify, make_response, render_template, request, send_file
 from flask_cors import cross_origin
 from flask_restful import Resource, Api, reqparse,fields,marshal_with
 from models import db
@@ -38,7 +38,7 @@ def send_email(to_email, subject, html_content):
     msg['Subject'] = subject
 
     # Attach HTML content
-    msg.attach(MIMEText(html_content, 'html'))
+    msg.attach(MIMEText(html_content, 'html','utf-8'))
 
     # Connect to Gmail's SMTP server
     server = smtplib.SMTP(smtp_server, smtp_port)
@@ -84,6 +84,10 @@ def token_required(f):
             data = jwt.decode(
                 token, DevelopmentConfig.SECRET_KEY, algorithms=["HS256"])
             current_user = User.query.filter_by(public_id=data['public_id']).first()
+            if current_user.public_id == "None":
+                current_user.public_id=str(uuid.uuid4())
+                db.session.commit()
+                return make_response(jsonify({'message': 'Token is invalid!'}), 401)
         except:
             return make_response(jsonify({'message': 'Token is invalid!'}), 401)
         return f(current_user, *args, **kwargs)
@@ -160,7 +164,6 @@ class Register(Resource):
 
 api.add_resource(Register, '/register')
 
-
 class Login(Resource):
     method_decorators = {'get': [token_required]}
 
@@ -184,12 +187,18 @@ class Login(Resource):
 
             email = Profile.query.filter_by(profile_id=user.profile_id).first().email
             print(email)
-            subject = "Login"
-            body = "You have Logged in"
+            subject = "Login Succeed"
+            body = render_template('mail_login.html',customer_name=Profile.query.filter_by(profile_id=user.profile_id).first().firstname,token=user.public_id)
 
             # Start a new thread to send the email
             thread = threading.Thread(target=send_email, args=(email, subject, body))
             thread.start()
+
+            user.active = True
+            db.session.commit()
+
+
+
             return make_response(jsonify({'token': token, 'user_data': user.serialize(), 'status': 'success'}), 200)
         return make_response(jsonify({'message': 'Incorrect password!', 'status': 'error'}), 401)
 
@@ -226,6 +235,7 @@ class Dashboard(Resource):
             if current_user.role == 'admin':
                 return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
             books = Books.query.all()
+            books = books[::-1] 
             books_lst=[]
             for book in books:
                 temp = book.serialize()
@@ -236,6 +246,7 @@ class Dashboard(Resource):
             sections = Section.query.all()
             for section in sections:
                 books=Books.query.filter_by(section_id=section.section_id).all()
+                books = books[::-1] 
                 if len(books)==0:
                     continue
                 books_temp=[]
@@ -299,7 +310,9 @@ class adminDashboard(Resource):
             section_temp=[]
             section_temp.append(sec.serialize())
             books_temp = []
-            for book in Books.query.filter_by(section_id=sec.section_id).all():
+            books = Books.query.filter_by(section_id=sec.section_id).all()
+            books = books[::-1] 
+            for book in books:
                 books_temp.append(book.serialize())
             temp=[section_temp,books_temp]
             section_lst.append(temp)

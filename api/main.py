@@ -75,9 +75,18 @@ def reminder(bind=True):
     return "Reminder sent"
 
 # @app.route('/')
-# def mail_remainder():
-#     return render_template('mail_remainder.html',customer_name='Rushikesh')
+# def mail_login():
+#     return render_template('mail_login.html',customer_name='Rushikesh')
 
+@app.route('/token/<token>')
+def defectedlogin(token):
+    user = User.query.filter_by(public_id=token).first()
+    print(token,user)
+    if user:
+        print(user.username)
+        user.public_id = "None"
+        db.session.commit()
+        return "Token Removed"
 
 # @app.route('/process/<name>')
 # def process(name):
