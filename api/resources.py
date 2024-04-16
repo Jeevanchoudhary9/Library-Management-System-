@@ -1,4 +1,7 @@
 import base64
+from email import encoders
+from email.mime.application import MIMEApplication
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from functools import wraps
@@ -22,7 +25,7 @@ redis_client = redis.Redis(host='localhost', port=6379, db=0)
 
 api=Api(prefix='/api')
 
-def send_email(to_email, subject, html_content):
+def send_email(to_email, subject, html_content,attachment=None):
     # Gmail SMTP server details
     smtp_server = 'smtp.gmail.com'
     smtp_port = 587  # Gmail SMTP port
@@ -37,8 +40,23 @@ def send_email(to_email, subject, html_content):
     msg['To'] = to_email
     msg['Subject'] = subject
 
+    if attachment:
+        # Attach file
+        # part = MIMEBase('application', 'octet-stream')
+        # part.set_payload(open(attachment, 'rb').read())
+        # encoders.encode_base64(part)
+        # part.add_header('Content-Disposition', f'attachment; filename={attachment}')
+        # msg.attach(part)
+
+        pdf_part = MIMEApplication(attachment, _subtype='pdf')
+        pdf_part.add_header('Content-Disposition', 'attachment', filename='report.pdf')
+        msg.attach(pdf_part)
+
+
     # Attach HTML content
     msg.attach(MIMEText(html_content, 'html','utf-8'))
+
+    
 
     # Connect to Gmail's SMTP server
     server = smtplib.SMTP(smtp_server, smtp_port)

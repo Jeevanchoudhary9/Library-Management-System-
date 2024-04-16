@@ -1,8 +1,10 @@
 from datetime import timedelta
 from email.mime.text import MIMEText
-from flask import Flask, render_template
-from flask_cors import CORS 
-from models import db, User
+from flask import Flask, jsonify, make_response, render_template
+from flask_cors import CORS
+from flask_restful import Api, Resource
+import weasyprint 
+from models import Books, History, Section, db, User
 from config import DevelopmentConfig, celeryConfig
 from resources import api
 from email.mime.multipart import MIMEMultipart
@@ -74,9 +76,38 @@ def reminder(bind=True):
     db.session.commit()
     return "Reminder sent"
 
-# @app.route('/')
-# def mail_login():
-#     return render_template('mail_login.html',customer_name='Rushikesh')
+@app.route('/')
+def mail_login():
+
+    current_user=User.query.filter_by(id=9).first()
+    books=Books.query.all()
+    books_lst=[]
+    books_count=[]
+    sections_count=[]
+    sections_name=[]
+    status_count=[]
+    status_name=[]
+    for book in books:
+        if History.query.filter_by(book_id=book.book_id,user_id=current_user.id).count()!=0:
+            books_lst.append(book.book_name)
+            books_count.append(History.query.filter_by(book_id=book.book_id,user_id=current_user.id).count())
+    for section in Section.query.all():
+        if History.query.filter_by(section_id=section.section_id,user_id=current_user.id).count()!=0:
+            sections_name.append(section.section_name)
+            sections_count.append(History.query.filter_by(section_id=section.section_id,user_id=current_user.id).count())
+    for books in History.query.all():
+        if books.status in status_name:
+            continue
+        status_name.append(History.query.filter_by(status=books.status,user_id=current_user.id).first().status)
+        status_count.append(History.query.filter_by(status=books.status,user_id=current_user.id).count())
+    
+    data={'books': books_lst, 'books_count': books_count, 'status': 'success','current_user': current_user.serialize(),'sections_count': sections_count,'sections_name': sections_name,'status_name':status_name,'status_count':status_count}
+
+
+    rendered = render_template('user_report.html',data=data)
+    pdf = weasyprint.HTML(string=rendered).write_pdf()
+    send_email("jeevanchoudhary2421@gmail.com", "PDF Report", "rendered", attachment=pdf)
+    return rendered
 
 @app.route('/token/<token>')
 def defectedlogin(token):
@@ -100,6 +131,37 @@ def defectedlogin(token):
 # def hellos():
 #     print("Hello World")
 #     return "Hello"
+# api=Api(prefix='/api')
+@app.route('/api/usersummary_pdf/<int:user_id>')
+def get(user_id):
+    
+    current_user=User.query.filter_by(id=user_id).first()
+    if current_user.role == 'admin':
+        return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+    books=Books.query.all()
+    books_lst=[]
+    books_count=[]
+    sections_count=[]
+    sections_name=[]
+    status_count=[]
+    status_name=[]
+    for book in books:
+        if History.query.filter_by(book_id=book.book_id,user_id=current_user.id).count()!=0:
+            books_lst.append(book.book_name)
+            books_count.append(History.query.filter_by(book_id=book.book_id,user_id=current_user.id).count())
+    for section in Section.query.all():
+        if History.query.filter_by(section_id=section.section_id,user_id=current_user.id).count()!=0:
+            sections_name.append(section.section_name)
+            sections_count.append(History.query.filter_by(section_id=section.section_id,user_id=current_user.id).count())
+    for books in History.query.all():
+        if books.status in status_name:
+            continue
+        status_name.append(History.query.filter_by(status=books.status,user_id=current_user.id).first().status)
+        status_count.append(History.query.filter_by(status=books.status,user_id=current_user.id).count())
+    
+    # return make_response(jsonify({'books': books_lst, 'books_count': books_count, 'status': 'success','current_user': current_user.serialize(),'sections_count': sections_count,'sections_name': sections_name,'status_name':status_name,'status_count':status_count}), 200)
+# api.add_resource(UserSummaryPDF, '/usersummary_pdf/<int:user_id>')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
