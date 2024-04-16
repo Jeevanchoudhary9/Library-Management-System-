@@ -31,10 +31,10 @@ def send_email(receiver_email, subject, message):
             server.starttls()
 
             # Login to the SMTP server
-            server.login('librarymanagementsystem00@gmail.com', 'sdttvofezmtkgcep')
+            server.login('jeevanchoudhary2421@gmail.com', 'sdyo knaw zkgj kvkd ')
 
             # Send the email
-            server.sendmail('librarymanagementsystem00@gmail.com', receiver_email, text)
+            server.sendmail('jeevanchoudhary2421@gmail.com', receiver_email, text)
             print('Email sent successfully.')
 
     except Exception as e:
@@ -223,8 +223,8 @@ class Dashboard(Resource):
             dashboard['user_data'] = current_user.serialize()
         else:
             dashboard = json.loads(res)
-            print("redis working")
-            if dashboard['user_data']['role'] != current_user.role:
+            dashboard['user_data'] = current_user.serialize()
+            if dashboard['user_data']['role'] == "admin":
                 return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
 
         dashboard['user_data'] = current_user.serialize()
