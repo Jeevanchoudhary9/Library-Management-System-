@@ -4,7 +4,6 @@ import os
 import threading
 import uuid
 import smtplib
-import celery
 from flask import Response, app, jsonify, make_response, request, send_file
 from flask_cors import cross_origin
 from flask_restful import Resource, Api, reqparse,fields,marshal_with
