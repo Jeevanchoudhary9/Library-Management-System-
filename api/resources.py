@@ -1,4 +1,6 @@
 import base64
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from functools import wraps
 import os
 import threading
@@ -19,25 +21,56 @@ import redis
 redis_client = redis.Redis(host='localhost', port=6379, db=0)
 
 api=Api(prefix='/api')
-# from main import send_email
-def send_email(receiver_email, subject, message):
-    try:
-        # Construct the email content
-        text = f"Subject: {subject}\n\n{message}"
 
-        # Connect to the SMTP server
-        with smtplib.SMTP('smtp.gmail.com', 587) as server:
-            server.starttls()
+def send_email(to_email, subject, html_content):
+    # Gmail SMTP server details
+    smtp_server = 'smtp.gmail.com'
+    smtp_port = 587  # Gmail SMTP port
 
-            # Login to the SMTP server
-            server.login('jeevanchoudhary2421@gmail.com', 'sdyo knaw zkgj kvkd ')
+    # Sender's Gmail address and password
+    sender_email = 'jeevanchoudhary2421@gmail.com'
+    sender_password = 'sdyo knaw zkgj kvkd'
 
-            # Send the email
-            server.sendmail('jeevanchoudhary2421@gmail.com', receiver_email, text)
-            print('Email sent successfully.')
+    # Create a MIME multipart message
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = to_email
+    msg['Subject'] = subject
 
-    except Exception as e:
-        print('Failed to send email:', e)
+    # Attach HTML content
+    msg.attach(MIMEText(html_content, 'html'))
+
+    # Connect to Gmail's SMTP server
+    server = smtplib.SMTP(smtp_server, smtp_port)
+    server.starttls()  # Start TLS encryption
+    server.login(sender_email, sender_password)  # Login to Gmail
+
+    # Send email
+    server.sendmail(sender_email, to_email, msg.as_string())
+
+    # Close SMTP connection
+    server.quit()
+
+
+# # from main import send_email
+# def send_email(receiver_email, subject, message):
+#     try:
+#         # Construct the email content
+#         text = f"Subject: {subject}\n\n{message}"
+
+#         # Connect to the SMTP server
+#         with smtplib.SMTP('smtp.gmail.com', 587) as server:
+#             server.starttls()
+
+#             # Login to the SMTP server
+#             server.login('jeevanchoudhary2421@gmail.com', 'sdyo knaw zkgj kvkd ')
+
+#             # Send the email
+#             server.sendmail('jeevanchoudhary2421@gmail.com', receiver_email, text)
+#             print('Email sent successfully.')
+
+#     except Exception as e:
+#         print('Failed to send email:', e)
 
 def token_required(f):
     @wraps(f)

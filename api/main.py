@@ -1,6 +1,6 @@
 from datetime import timedelta
 from email.mime.text import MIMEText
-from flask import Flask
+from flask import Flask, render_template
 from flask_cors import CORS 
 from models import db, User
 from config import DevelopmentConfig, celeryConfig
@@ -45,27 +45,39 @@ celery.conf.update(
             'task': 'main.monthly_report',
             'schedule': crontab(hour=12, minute=00, day_of_month=1),
         },
+        'check': {
+            'task': 'main.check',
+            'schedule': timedelta(seconds=10),
+        
+        }
     }
 )
 
 
 @celery.task()
-# @app.route('/')
 def reminder(bind=True):
     print("Reminder Working")
     users = User.query.all()
     for user in users:
 
         if user.active != True and user.role != 'admin':
-            text = "How long are you going to be away?\n" + "We miss you. Please give us a visit \n\nThank you."
-            # send_email(Profile.query.filter_by(profile_id=user.profile_id).first().email, "Where are you?", text)
-
-        if user.active == True: 
-            user.active = False
+            print(user.username)
+            print(user.role)
+            profile=Profile.query.filter_by(profile_id=user.profile_id).first()
+            name=profile.firstname + " " +profile.lastname
+            email_message=render_template('mail_remainder.html',customer_name=name)
+            
+            send_email(Profile.query.filter_by(profile_id=user.profile_id).first().email, "Where are you?", email_message)
 
     for user in users:
         user.active = False
+    db.session.commit()
     return "Reminder sent"
+
+# @app.route('/')
+# def mail_remainder():
+#     return render_template('mail_remainder.html',customer_name='Rushikesh')
+
 
 # @app.route('/process/<name>')
 # def process(name):

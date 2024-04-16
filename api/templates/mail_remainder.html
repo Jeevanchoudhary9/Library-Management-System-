@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reminder: Visit Our Application!</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Basic styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .content {
+            text-align: justify;
+        }
+        .cta-btn {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            background-color: #007bff;
+            color: #fff;
+            text-align: center;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="text-align: center; margin-top: 20px; margin-bottom: 40px;">
+            <h5 style="margin: 0;">
+                <a href="http://localhost:8080/" style="text-decoration: none; color: #000;">
+                    <img src="https://lh3.googleusercontent.com/u/0/drive-viewer/AKGpihb65pDT-XnFN50XpEXDuEftq7_DQN8jflBQmqu72qcgPa_a8-8PJHWwLGScF72dXI6q5JpPXWcU0lhTH1DKjL9DpXajrZ9DAZo=w1440-h423" width="35" height="35" style="vertical-align: middle; margin-right: 10px;">
+                    <b style="vertical-align: middle;">Library Management System</b>
+                </a>
+            </h5>
+        </div>
+        
+        <h4 style="text-align: center;" class="mb-3"><b>It's been a long day without you my friend!</b></h4>
+        <div class="content">
+            <p>Dear {{customer_name}},</p>
+            <p>It's been a day since your last visit to our Library Management System. Have you discovered the convenience of borrowing eBooks from home yet?</p>
+            <p>Our system offers a diverse collection of eBooks across genres and subjects. Whether it's for leisure or academic purposes, there's something for everyone.</p>
+            <p>Experience hassle-free browsing and borrowing with our user-friendly interface. Take advantage of this opportunity to enrich your reading experience.</p>
+            <p>Don't wait any longer. Dive into a world of knowledge today!</p>
+            <p>Best regards,<br>Library Management System Team</p>
+            <p></p>
+        </div>
+        <a href="http://localhost:8080/" class="cta-btn" style="color:#fff"><b>Visit Our Application</b></a>
+    </div>
+</body>
+</html>
