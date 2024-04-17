@@ -1,0 +1,73 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in Success</title>
+
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .cta-btn {
+        display: block;
+        width: 200px;
+        margin: 20px auto;
+        background-color: #007bff;
+        color: #fff;
+        text-align: center;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+    }
+</style>
+  <!--[if mso]><style type="text/css">body, table, td, a { font-family: Arial, Helvetica, sans-serif !important; }</style><![endif]-->
+</head>
+
+<body style="font-family: Helvetica, Arial, sans-serif; margin: 0px; padding: 0px; background-color: #ffffff;">
+  <table role="presentation"
+    style="width: 100%; border-collapse: collapse; border: 0px; border-spacing: 0px; font-family: Arial, Helvetica, sans-serif; background-color: rgb(239, 239, 239);">
+    <tbody>
+      <tr>
+        <td align="center" style="padding: 1rem 2rem; vertical-align: top; width: 100%;">
+          <table role="presentation" style="max-width: 600px; border-collapse: collapse; border: 0px; border-spacing: 0px; text-align: left;">
+            <tbody>
+              <tr>
+                <td style="padding: 40px 0px 0px;">
+                  <div style="padding: 20px; background-color: rgb(255, 255, 255);">
+                    <div style="text-align: center; margin-top: 20px; margin-bottom: 40px;">
+                        <h5 style="margin: 0;">
+                            <a href="http://localhost:8080/" style="text-decoration: none; color: #000;">
+                                <img src="https://lh3.googleusercontent.com/u/0/drive-viewer/AKGpihb65pDT-XnFN50XpEXDuEftq7_DQN8jflBQmqu72qcgPa_a8-8PJHWwLGScF72dXI6q5JpPXWcU0lhTH1DKjL9DpXajrZ9DAZo=w1440-h423" width="35" height="35" style="vertical-align: middle; margin-right: 10px;">
+                                <b style="vertical-align: middle;">Library Management System</b>
+                            </a>
+                        </h5>
+                    </div>
+                    <div class="container">
+                        
+                        <h4 style="text-align: center;" class="mb-3"><b>Status of Requested Book</b></h4>
+                        <div class="content">
+                            <p>Dear <b>{{customer_name}}</b>,</p>
+                            <p>Your request for the book <b>{{book_name}}:{{title}}</b> has been <b>{{status}}</b>.</p>
+                            <div style="padding-top: 2px; color: rgb(153, 153, 153); text-align: left;">
+                                <p style="padding-bottom: 2px;font-size: 10px;">For more Information visit Application</p>
+                              </div>
+                            <p>Best regards,<br>Library Management System Team</p>
+                            <p></p>
+                        </div>
+                        <a href="http://localhost:8080/" class="cta-btn" style="color:#ffffff"><b>Visit Our Application</b></a>
+                    </div>
+                  </div>
+                  <div style="padding-top: 20px; color: rgb(153, 153, 153); text-align: center;">
+                    <p style="padding-bottom: 16px">This Mail was Intended for {{customer_name}}</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+
+</html>

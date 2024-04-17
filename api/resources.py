@@ -972,6 +972,17 @@ class RequestAccept(Resource):
         issue = Issue.query.filter_by(book_id=book_id, status='Requested').first()
         if issue:
             issue.status = 'Issued'
+
+            email = Profile.query.filter_by(profile_id=User.query.filter_by(id=issue.user_id).first().profile_id).first().email
+            print(email)
+            subject = "Book Issued"
+            body = render_template('mail_status.html',customer_name=Profile.query.filter_by(profile_id=User.query.filter_by(id=issue.user_id).first().profile_id).first().firstname,book_name=Books.query.filter_by(book_id=issue.book_id).first().book_name,status='Issued',title=Books.query.filter_by(book_id=issue.book_id).first().title)
+
+            # Start a new thread to send the email
+            thread = threading.Thread(target=send_email, args=(email, subject, body))
+            thread.start()
+        
+
             db.session.commit()
             redis_client.delete('adminsummary')
             return make_response(jsonify({'message': 'Request accepted successfully', 'status': 'success'}), 200)
@@ -991,6 +1002,16 @@ class RequestReject(Resource):
             db.session.add(history)
             db.session.delete(issue)
             db.session.commit()
+
+            email = Profile.query.filter_by(profile_id=User.query.filter_by(id=issue.user_id).first().profile_id).first().email
+            print(email)
+            subject = "Book Issued"
+            body = render_template('mail_status.html',customer_name=Profile.query.filter_by(profile_id=User.query.filter_by(id=issue.user_id).first().profile_id).first().firstname,book_name=Books.query.filter_by(book_id=issue.book_id).first().book_name,status='Rejected',title=Books.query.filter_by(book_id=issue.book_id).first().title)
+
+            # Start a new thread to send the email
+            thread = threading.Thread(target=send_email, args=(email, subject, body))
+            thread.start()
+
             redis_client.delete('adminsummary')
             return make_response(jsonify({'message': 'Request rejected successfully', 'status': 'success'}), 200)
         return make_response(jsonify({'message': 'Request not found', 'status': 'error'}), 404)
@@ -1009,6 +1030,16 @@ class RevokeAccess(Resource):
             db.session.add(history)
             db.session.delete(issue)
             db.session.commit()
+
+            email = Profile.query.filter_by(profile_id=User.query.filter_by(id=issue.user_id).first().profile_id).first().email
+            print(email)
+            subject = "Book Issued"
+            body = render_template('mail_status.html',customer_name=Profile.query.filter_by(profile_id=User.query.filter_by(id=issue.user_id).first().profile_id).first().firstname,book_name=Books.query.filter_by(book_id=issue.book_id).first().book_name,status='Revoked',title=Books.query.filter_by(book_id=issue.book_id).first().title)
+
+            # Start a new thread to send the email
+            thread = threading.Thread(target=send_email, args=(email, subject, body))
+            thread.start()
+
             redis_client.delete('adminsummary')
             return make_response(jsonify({'message': 'Access revoked successfully', 'status': 'success'}), 200)
         return make_response(jsonify({'message': 'Request not found', 'status': 'error'}), 404)
@@ -1033,6 +1064,7 @@ class AdminBookIssued(Resource):
             issue_temp.append(Section.query.filter_by(section_id=Books.query.filter_by(book_id=issue.book_id).first().section_id).first().serialize())
             issue_temp.append(Profile.query.filter_by(profile_id=User.query.filter_by(id=issue.user_id).first().profile_id).first().serialize())
             issues_lst.append(issue_temp)
+        
         return make_response(jsonify({'issues': issues_lst, 'status': 'success','current_user': current_user.serialize()}), 200)
 
 api.add_resource(AdminBookIssued, '/adminbookissued')
