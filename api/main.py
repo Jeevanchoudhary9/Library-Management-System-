@@ -47,11 +47,11 @@ celery.conf.update(
             'task': 'main.monthly_report',
             'schedule': crontab(hour=12, minute=00, day_of_month=1),
         },
-        'check': {
-            'task': 'main.check',
-            'schedule': timedelta(seconds=10),
+        # 'check': {
+        #     'task': 'main.check',
+        #     'schedule': timedelta(seconds=10),
         
-        }
+        # }
     }
 )
 

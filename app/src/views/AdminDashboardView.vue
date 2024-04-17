@@ -120,9 +120,9 @@
                 <div>
                   <button
                     class="btn btn-warning btn-block mb-2 mx-1"
+                    v-on:click="edit_book_data(books, books.book_id)"
                     data-bs-toggle="modal"
                     data-bs-target="#myModal_editbook"
-                    v-on:click="edit_book_data(books)"
                   >
                     Edit
                   </button>
@@ -327,6 +327,7 @@
                           ref="fileInput"
                           @change="handleFileUpload"
                           style="display: none"
+                          required
                         />
                         Upload Photo
                       </label>
@@ -365,13 +366,23 @@
               </li>
               <hr />
             </ul>
-
             <!-- Card -->
             <div class="card mb-9 bg-light">
               <div class="card-body">
                 <ul
                   class="list-group list-group-sm list-group-flush-y list-group-flush-x"
                 >
+                  <li class="list-group-item d-flex">
+                    <span>Upload PDF</span>
+                    <input
+                      type="file"
+                      class="ms-auto fs-sm mx-2 form-control form-control-sm"
+                      style="width: 120px"
+                      ref="fileInputpdf"
+                      @change="handleFileUploadpdf"
+                      required
+                    />
+                  </li>
                   <li class="list-group-item d-flex">
                     <span>Book Name</span>
                     <input
@@ -558,6 +569,17 @@
                   class="list-group list-group-sm list-group-flush-y list-group-flush-x"
                 >
                   <li class="list-group-item d-flex">
+                    <span>Upload PDF</span>
+                    <input
+                      type="file"
+                      class="ms-auto fs-sm mx-2 form-control form-control-sm"
+                      style="width: 120px"
+                      ref="anotherFileInputpdf"
+                      @change="handleAnotherFileUploadpdf"
+                      required
+                    />
+                  </li>
+                  <li class="list-group-item d-flex">
                     <span>Book Name</span>
                     <input
                       type="text"
@@ -660,7 +682,9 @@ export default {
       title: "Add",
       section_id: null,
       file: null,
+      filepdf: null,
       anotherFile: null,
+      anotherFilepdf: null,
       photoURL: "",
       anotherPhotoURL: "",
       formData: {
@@ -789,8 +813,8 @@ export default {
           console.error("Error fetching data:", error);
         });
     },
-    edit_book_data(book) {
-      this.formData.book_id = book.book_id;
+    edit_book_data(book, book_id) {
+      this.formData.book_id = book_id;
       this.formData.author = book.author;
       this.formData.book_name = book.book_name;
       this.formData.title = book.title;
@@ -855,6 +879,9 @@ export default {
       this.file = this.$refs.fileInput.files[0];
       this.renderImage(this.file);
     },
+    handleFileUploadpdf() {
+      this.filepdf = this.$refs.fileInputpdf.files[0];
+    },
     renderImage(file) {
       const reader = new FileReader();
       console.log("file", file);
@@ -868,6 +895,7 @@ export default {
       const formData = new FormData();
       console.log(this.file);
       formData.append("image", this.file);
+      formData.append("pdf_file", this.filepdf);
       formData.append("book_name", this.formData.book_name);
       formData.append("author", this.formData.author);
       formData.append("section_id", section_id);
@@ -912,6 +940,10 @@ export default {
       };
       reader.readAsDataURL(anotherFile);
     },
+    handleAnotherFileUploadpdf() {
+      this.anotherFilepdf = this.$refs.anotherFileInputpdf.files[0];
+      console.log(this.anotherFilepdf);
+    },
     async uploadDataedit() {
       const formData = new FormData();
       if (this.anotherFile != null) {
@@ -919,7 +951,20 @@ export default {
       } else {
         formData.append("image", "");
       }
-      console.log(this.anotherFile);
+      if (this.anotherFilepdf != null) {
+        formData.append("pdf_file", this.anotherFilepdf);
+      } else {
+        formData.append("pdf_file", "");
+      }
+      // if (this.anotherFile != null && this.anotherFilepdf != null) {
+      //   formData.append("image", this.anotherFile);
+      //   formData.append("pdf_file", this.anotherFilepdf);
+      //   console.log(this.anotherFilepdf);
+      // } else {
+      //   formData.append("image", "");
+      //   formData.append("pdf_file", "");
+      // }
+      console.log(this.anotherFile, this.anotherFilepdf);
       formData.append("book_id", this.formData.book_id);
       formData.append("book_name", this.formData.book_name);
       formData.append("author", this.formData.author);

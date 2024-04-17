@@ -148,3 +148,11 @@ class Issue(db.Model):
         
             
 
+class PDF(db.Model):
+    __TableName__='pdf'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True, nullable=False, unique=True)
+    book_id = db.Column(db.Integer, nullable=False, unique=True)
+    filename = db.Column(db.String(200), nullable=False)
+    path = db.Column(db.Text, nullable=False)
+
+

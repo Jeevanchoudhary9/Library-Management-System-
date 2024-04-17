@@ -6,6 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from functools import wraps
 import os
+import random
 import threading
 import uuid
 import smtplib
@@ -203,17 +204,18 @@ class Login(Resource):
             token = jwt.encode({'public_id': user.public_id, 'exp': datetime.utcnow(
             ) + timedelta(minutes=30)}, DevelopmentConfig.SECRET_KEY, algorithm="HS256")
 
-            email = Profile.query.filter_by(profile_id=user.profile_id).first().email
-            print(email)
-            subject = "Login Succeed"
-            body = render_template('mail_login.html',customer_name=Profile.query.filter_by(profile_id=user.profile_id).first().firstname,token=user.public_id)
+            if user.role != 'admin':
+                email = Profile.query.filter_by(profile_id=user.profile_id).first().email
+                print(email)
+                subject = "Login Succeed"
+                body = render_template('mail_login.html',customer_name=Profile.query.filter_by(profile_id=user.profile_id).first().firstname,token=user.public_id)
 
-            # Start a new thread to send the email
-            thread = threading.Thread(target=send_email, args=(email, subject, body))
-            thread.start()
+                # Start a new thread to send the email
+                thread = threading.Thread(target=send_email, args=(email, subject, body))
+                thread.start()
 
-            user.active = True
-            db.session.commit()
+                user.active = True
+                db.session.commit()
 
 
 
@@ -421,11 +423,41 @@ class AddBooks(Resource):
             # Handle file upload
             image_file = request.files['image']
             image_data = image_file.read()
+
+            try:
+                if 'pdf_file' not in request.files:
+                    return 'No file part'
+                
+                file = request.files['pdf_file']
+                print(file)
+                
+                if file.filename == '':
+                    return make_response(jsonify({'message': 'No selected file', 'status': 'error'}), 400)
+                
+                if file:
+                    filename = file.filename+str(random.randint(1,1000000))
+                    print("filename",filename)
+                    file.save(os.path.join("pdfuploads", filename))
+                    path=os.path.join("pdfuploads", filename)
+                    print(path)
+                    # print file path
+                    print("file saved")
+                    book_id=random.randint(1,1000000)
+                    new_pdf = PDF(filename=filename,book_id=book_id,path=path)
+                    print(new_pdf)
+                    db.session.add(new_pdf)
+                    db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                return make_response(jsonify({'error': str(e)}), 500)
+
             # Handle form data
             try:
                 date_issue = datetime.now()
                 book_data = request.form
+                print(book_data)
                 book = Books(
+                    book_id=book_id,
                     book_name=book_data['book_name'],
                     author=book_data['author'],
                     image=image_data,  # If image is part of form data
@@ -450,61 +482,157 @@ api.add_resource(AddBooks, '/add_books')
 class EditBook(Resource):
     method_decorators = {'post': [token_required]}
     def post(self, current_user):
-        if current_user.role != 'admin':
-            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
-        if request.files:
-            # Handle file upload
-            image_file = request.files['image']
-            image_data = image_file.read()
-            try:
-                book_data = request.form
-                book = Books.query.filter_by(book_id=book_data['book_id']).first()
-                if book_data['book_name'] == "" or book_data['author'] == "" or book_data['section_id'] == "" or book_data['status'] == "" or book_data['description'] == "" or book_data['title'] == "":
-                    return make_response(jsonify({'message': 'All fields are required', 'status': 'error'}), 400)
-                if len(book_data['description'].split())>300 or sum(c.isalpha() for c in book_data['description']) >1600:
-                    return make_response(jsonify({'message': 'Description should not exceed 300 words or 1600 characters', 'status': 'error'}), 400)
-                for book in Books.query.all():
-                    if book.book_name == book_data['book_name'] and book.book_id != book_data['book_id']:
-                        return make_response(jsonify({'message': 'Book already exists', 'status': 'error'}), 409)
-                book.book_name = book_data['book_name']
-                book.author = book_data['author']
+        print(request.files)
+        print('image' in request.files)
+        print('pdf_file' in request.files)
+        print(request.form)
+
+        try:
+            if request.form['book_id'] == "" or request.form['book_name'] == "" or request.form['author'] == "" or request.form['section_id'] == "" or request.form['status'] == "" or request.form['description'] == "" or request.form['title'] == "":
+                return make_response(jsonify({'message': 'All fields are required', 'status': 'error'}), 400)
+            if len(request.form['description'].split())>300 and sum(c.isalpha() for c in request.form['description']) >2600:
+                return make_response(jsonify({'message': 'Description should not exceed 300 words or 2600 characters', 'status': 'error'}), 400)
+            
+            book=Books.query.filter_by(book_id=request.form['book_id']).first()
+            book.book_name = request.form['book_name']
+            book.author = request.form['author']
+            book.section_id = request.form['section_id']
+            book.status = request.form['status']
+            book.description = request.form['description']
+            book.title = request.form['title']
+
+            if 'image' in request.files:
+                image_file = request.files['image']
+                image_data = image_file.read()
                 book.image = image_data
-                book.section_id = book_data['section_id']
-                book.status = book_data['status']
-                book.description = book_data['description']
-                book.title = book_data['title']
-                db.session.commit()
-                redis_client.delete('dashboard')
-                redis_client.delete('adminsummary')
-                return make_response(jsonify({'message': 'Book added successfully', 'status': 'success'}), 201)
-            except Exception as e:
-                db.session.rollback()
-                return make_response(jsonify({'error': str(e)}), 500)
-            # Handle form data
-        else:
-            try:
-                book_data = request.form
-                book = Books.query.filter_by(book_id=book_data['book_id']).first()
-                if book_data['book_name'] == "" or book_data['author'] == "" or book_data['section_id'] == "" or book_data['status'] == "" or book_data['description'] == "" or book_data['title'] == "":
-                    return make_response(jsonify({'message': 'All fields are required', 'status': 'error'}), 400)
-                if len(book_data['description'].split())>300 or sum(c.isalpha() for c in book_data['description']) >1600:
-                    return make_response(jsonify({'message': 'Description should not exceed 300 words or 1600 characters', 'status': 'error'}), 400)
-                for book in Books.query.all():
-                    if book.book_name == book_data['book_name'] and book.book_id != book_data['book_id']:
-                        return make_response(jsonify({'message': 'Book already exists', 'status': 'error'}), 409)
-                book.book_name = book_data['book_name']
-                book.author = book_data['author']
-                book.section_id = book_data['section_id']
-                book.status = book_data['status']
-                book.description = book_data['description']
-                book.title = book_data['title']
-                db.session.commit()
-                redis_client.delete('dashboard')
-                redis_client.delete('adminsummary')
-                return make_response(jsonify({'message': 'Book Edited successfully', 'status': 'success'}), 201)
-            except Exception as e:
-                db.session.rollback()
-                return make_response(jsonify({'error': str(e)}), 500)
+
+            if 'pdf_file' in request.files:
+                file = request.files['pdf_file']
+                print(file)
+                if file.filename == '':
+                    return make_response(jsonify({'message': 'No selected file', 'status': 'error'}), 400)
+                if file:
+                    try:
+                        if PDF.query.filter_by(book_id=book.book_id).first():
+                            pdf = PDF.query.filter_by(book_id=book.book_id).first()
+                            filename = pdf.filename
+                            file.save(os.path.join("pdfuploads", filename))
+                            path=os.path.join("pdfuploads", filename)
+                            print(path)
+                            # print file path
+                            print("file saved")
+                            pdf.path=path
+                            db.session.commit()
+                        else:
+                            filename = file.filename+str(random.randint(1,1000000))
+                            print("filename",filename)
+                            file.save(os.path.join("pdfuploads", filename))
+                            path=os.path.join("pdfuploads", filename)
+                            print(path)
+                            # print file path
+                            print("file saved")
+                            new_pdf = PDF(filename=filename,book_id=request.form['book_id'],path=path)
+                            print(new_pdf)
+                            db.session.add(new_pdf)
+                            db.session.commit()
+                    except Exception as e:
+                        db.session.rollback()
+                        return make_response(jsonify({'error': str(e)}), 500)
+            db.session.commit()
+            redis_client.delete('dashboard')
+            redis_client.delete('adminsummary')
+            return make_response(jsonify({'message': 'Book edited successfully', 'status': 'success'}), 201)
+        except Exception as e:
+            db.session.rollback()
+            return make_response(jsonify({'error': str(e)}), 500)
+
+    # def post(self, current_user):
+    #     if current_user.role != 'admin':
+    #         return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+        
+    #     print(request.files)
+    #     if request.files:
+    #         # Handle file upload
+    #         image_file = request.files['image']
+    #         image_data = image_file.read()
+
+    #         try:
+    #             if 'pdf_file' not in request.files:
+    #                     return make_response(jsonify({'message': 'No file part', 'status': 'error'}), 400)
+                    
+    #             file = request.files['pdf_file']
+    #             print(file)
+                
+    #             if file.filename == '':
+    #                 return make_response(jsonify({'message': 'No selected file', 'status': 'error'}), 400)
+                
+    #             if file:
+    #                 book=Books.query.filter_by(book_id=request.form['book_id']).first()
+    #                 pdf = PDF.query.filter_by(book_id=book.book_id).first()
+    #                 filename = pdf.filename
+    #                 file.save(os.path.join("pdfuploads", filename))
+    #                 path=os.path.join("pdfuploads", filename)
+    #                 print(path)
+    #                 # print file path
+    #                 print("file saved")
+    #                 new_pdf = PDF(filename=filename,book_id=request.form['book_id'],path=path)
+    #                 print(new_pdf)
+    #                 db.session.add(new_pdf)
+    #                 db.session.commit()
+    #                 print("dddd")
+    #         except Exception as e:
+    #             db.session.rollback()
+    #             return make_response(jsonify({'error': str(e)}), 500)
+
+    #         try:
+    #             book_data = request.form
+    #             book = Books.query.filter_by(book_id=book_data['book_id']).first()
+    #             if book_data['book_name'] == "" or book_data['author'] == "" or book_data['section_id'] == "" or book_data['status'] == "" or book_data['description'] == "" or book_data['title'] == "":
+    #                 return make_response(jsonify({'message': 'All fields are required', 'status': 'error'}), 400)
+    #             if len(book_data['description'].split())>300 and sum(c.isalpha() for c in book_data['description']) >1600:
+    #                 return make_response(jsonify({'message': 'Description should not exceed 300 words or 1600 characters', 'status': 'error'}), 400)
+    #             # for book in Books.query.all():
+    #             #     if book.book_name == book_data['book_name'] and book.book_id != book_data['book_id']:
+    #             #         return make_response(jsonify({'message': 'Book already exists', 'status': 'error'}), 409)
+    #             book.book_name = book_data['book_name']
+    #             book.author = book_data['author']
+    #             book.image = image_data
+    #             book.section_id = book_data['section_id']
+    #             book.status = book_data['status']
+    #             book.description = book_data['description']
+    #             book.title = book_data['title']
+    #             db.session.commit()
+    #             redis_client.delete('dashboard')
+    #             redis_client.delete('adminsummary')
+    #             return make_response(jsonify({'message': 'Book added successfully', 'status': 'success'}), 201)
+    #         except Exception as e:
+    #             db.session.rollback()
+    #             return make_response(jsonify({'error': str(e)}), 500)
+    #         # Handle form data
+    #     else:
+    #         try:
+    #             book_data = request.form
+    #             book = Books.query.filter_by(book_id=book_data['book_id']).first()
+    #             if book_data['book_name'] == "" or book_data['author'] == "" or book_data['section_id'] == "" or book_data['status'] == "" or book_data['description'] == "" or book_data['title'] == "":
+    #                 return make_response(jsonify({'message': 'All fields are required', 'status': 'error'}), 400)
+    #             if len(book_data['description'].split())>300 and sum(c.isalpha() for c in book_data['description']) >1600:
+    #                 return make_response(jsonify({'message': 'Description should not exceed 300 words or 1600 characters', 'status': 'error'}), 400)
+    #             # for book in Books.query.all():
+    #             #     if book.book_name == book_data['book_name'] and book.book_id != book_data['book_id']:
+    #             #         return make_response(jsonify({'message': 'Book already exists', 'status': 'error'}), 409)
+    #             book.book_name = book_data['book_name']
+    #             book.author = book_data['author']
+    #             book.section_id = book_data['section_id']
+    #             book.status = book_data['status']
+    #             book.description = book_data['description']
+    #             book.title = book_data['title']
+    #             db.session.commit()
+    #             redis_client.delete('dashboard')
+    #             redis_client.delete('adminsummary')
+    #             return make_response(jsonify({'message': 'Book Edited successfully', 'status': 'success'}), 201)
+    #         except Exception as e:
+    #             db.session.rollback()
+    #             return make_response(jsonify({'error': str(e)}), 500)
 
 api.add_resource(EditBook, '/edit_book')
 
@@ -973,3 +1101,27 @@ class UserSummary(Resource):
         return make_response(jsonify({'books': books_lst, 'books_count': books_count, 'status': 'success','current_user': current_user.serialize(),'sections_count': sections_count,'sections_name': sections_name,'status_name':status_name,'status_count':status_count}), 200)
 api.add_resource(UserSummary, '/usersummary')
 
+class BookRead(Resource):
+    method_decorators = [token_required]
+
+    def get(self,current_user,book_id):
+        if current_user.role == 'admin':
+            return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+        
+        pdf=PDF.query.filter_by(book_id=book_id).first()
+        with open(pdf.path, 'rb') as f:
+            pdf_data = f.read() 
+        # return make_response(pdf_data, 200)
+        return send_file(pdf.path, as_attachment=True)
+
+    
+api.add_resource(BookRead, '/bookread/<int:book_id>')
+
+class pdfshow(Resource):
+    def get(self):
+        pdf=PDF.query.filter_by(book_id=10).first()
+        with open(pdf.path, 'rb') as f:
+            pdf_data = f.read() 
+        # return make_response(pdf_data, 200)
+        return Response(pdf_data, mimetype="application/pdf")
+api.add_resource(pdfshow, '/pdfshow')

@@ -98,6 +98,15 @@
             >
               {{ status }}
             </button>
+            <button
+              type="button"
+              :hidden="status !== 'Return Book'"
+              class="btn btn-info fw-medium d align-items-center justify-content-center"
+              style="border-radius: 20px; color: black"
+              v-on:click="view_request(this.$route.params.id)"
+            >
+              View Book
+            </button>
             <div class="modal" id="myModal">
               <div class="modal-dialog">
                 <div class="modal-content">
@@ -550,6 +559,9 @@ export default {
       } catch (error) {
         console.error("Error fetching data:", error);
       }
+    },
+    view_request(id) {
+      this.$router.push("/bookread/" + id);
     },
   },
   computed: {
