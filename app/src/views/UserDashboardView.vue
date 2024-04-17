@@ -95,7 +95,7 @@
                   </div>
                 </a>
 
-                <span
+                <!-- <span
                   style="
                     font-size: small;
                     font-weight: bold;
@@ -112,7 +112,7 @@
                     text-decoration: none;
                   "
                   >$3.99</span
-                >
+                > -->
               </li>
             </ol>
           </div>

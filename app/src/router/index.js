@@ -32,6 +32,11 @@ const routes = [
     component: () => import("../views/BookRead.vue"),
   },
   {
+    path: "/bookreadadmin/:id/",
+    name: "bookreadadmin",
+    component: () => import("../views/AdminBookRead.vue"),
+  },
+  {
     path: "/adminbook/:id",
     name: "adminbook",
     component: () => import("../views/AdminBookView.vue"),

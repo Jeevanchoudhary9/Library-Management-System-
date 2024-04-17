@@ -112,6 +112,19 @@ def token_required(f):
         return f(current_user, *args, **kwargs)
     return decorated
 
+def token_check(token):
+    try:
+        data = jwt.decode(
+            token, DevelopmentConfig.SECRET_KEY, algorithms=["HS256"])
+        current_user = User.query.filter_by(public_id=data['public_id']).first()
+        if current_user.public_id == "None":
+            current_user.public_id=str(uuid.uuid4())
+            db.session.commit()
+            return None
+    except:
+        return None
+    return current_user
+
 
 class apiCheck(Resource):
 
@@ -203,8 +216,9 @@ class Login(Resource):
         if check_password_hash(user.password, password):
             token = jwt.encode({'public_id': user.public_id, 'exp': datetime.utcnow(
             ) + timedelta(minutes=30)}, DevelopmentConfig.SECRET_KEY, algorithm="HS256")
-
-            if user.role != 'admin':
+            return make_response(jsonify({'token': token, 'user_data': user.serialize(), 'status': 'success'}), 200)
+        
+        if user.role != 'admin' and user.active == False:
                 email = Profile.query.filter_by(profile_id=user.profile_id).first().email
                 print(email)
                 subject = "Login Succeed"
@@ -216,10 +230,8 @@ class Login(Resource):
 
                 user.active = True
                 db.session.commit()
+                return make_response(jsonify({'message': 'Login Succeed', 'status': 'success'}), 200)
 
-
-
-            return make_response(jsonify({'token': token, 'user_data': user.serialize(), 'status': 'success'}), 200)
         return make_response(jsonify({'message': 'Incorrect password!', 'status': 'error'}), 401)
 
 api.add_resource(Login, '/login')
@@ -1108,20 +1120,37 @@ class BookRead(Resource):
         if current_user.role == 'admin':
             return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         
-        pdf=PDF.query.filter_by(book_id=book_id).first()
-        with open(pdf.path, 'rb') as f:
-            pdf_data = f.read() 
-        # return make_response(pdf_data, 200)
-        return send_file(pdf.path, as_attachment=True)
-
+        issue=Issue.query.filter_by(book_id=book_id,user_id=current_user.id).first()
+        if issue.status == 'Issued':
+            return make_response(jsonify({'user_data':current_user.serialize(), 'status': 'success'}), 200) 
+        
+        return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
     
 api.add_resource(BookRead, '/bookread/<int:book_id>')
 
 class pdfshow(Resource):
-    def get(self):
-        pdf=PDF.query.filter_by(book_id=10).first()
-        with open(pdf.path, 'rb') as f:
-            pdf_data = f.read() 
-        # return make_response(pdf_data, 200)
-        return Response(pdf_data, mimetype="application/pdf")
-api.add_resource(pdfshow, '/pdfshow')
+    def get(self,book_id,token):
+        user = token_check(token)
+        print(user.role)
+        if user==None:
+            return make_response(jsonify({'message': 'Invalid token', 'status': 'error'}), 401)
+        issue=Issue.query.filter_by(book_id=book_id,user_id=user.id).first()
+        print(issue)
+        if not issue:
+            if user.role != 'admin':
+                return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+            if user.role == 'admin':
+                pdf=PDF.query.filter_by(book_id=book_id).first()
+                with open(pdf.path, 'rb') as f:
+                    pdf_data = f.read() 
+                return Response(pdf_data, mimetype="application/pdf")
+            
+        if issue.status == 'Issued' or user.role == 'admin':
+            pdf=PDF.query.filter_by(book_id=10).first()
+            with open(pdf.path, 'rb') as f:
+                pdf_data = f.read() 
+            # return make_response(pdf_data, 200)
+            return Response(pdf_data, mimetype="application/pdf")
+
+        return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
+api.add_resource(pdfshow, '/pdfshow/<int:book_id>/<string:token>')

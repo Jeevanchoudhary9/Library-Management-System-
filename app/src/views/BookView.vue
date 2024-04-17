@@ -92,20 +92,22 @@
             <button
               type="button"
               :hidden="status !== 'Return Book'"
-              class="btn btn-info fw-medium d align-items-center justify-content-center"
-              style="border-radius: 20px; color: black"
-              v-on:click="return_request(this.$route.params.id)"
+              class="btn btn-warning fw-medium d align-items-center justify-content-center"
+              style="border-radius: 20px; color: black; min-width: 300px"
+              v-on:click="view_request(this.$route.params.id)"
             >
-              {{ status }}
+              View Book
             </button>
+            <br />
+            <br />
             <button
               type="button"
               :hidden="status !== 'Return Book'"
               class="btn btn-info fw-medium d align-items-center justify-content-center"
-              style="border-radius: 20px; color: black"
-              v-on:click="view_request(this.$route.params.id)"
+              style="border-radius: 20px; color: black; min-width: 300px"
+              v-on:click="return_request(this.$route.params.id)"
             >
-              View Book
+              {{ status }}
             </button>
             <div class="modal" id="myModal">
               <div class="modal-dialog">
@@ -289,7 +291,7 @@
                 </div>
               </a>
 
-              <span
+              <!-- <span
                 style="
                   font-size: small;
                   font-weight: bold;
@@ -306,7 +308,7 @@
                   text-decoration: none;
                 "
                 >$3.99</span
-              >
+              > -->
             </li>
           </ol>
         </div>

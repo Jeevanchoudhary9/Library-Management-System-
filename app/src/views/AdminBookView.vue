@@ -49,17 +49,17 @@
         <!-- last col -->
         <div class="card mx-2" style="width: 100%">
           <div class="card-body">
-            <h5 class="card-title">Request for Book</h5>
+            <h5 class="card-title">View for Book</h5>
             <p class="card-text">
-              Request for the book to read it. The book will be available for
-              you to read for the period of time you requested after approval.
+              View for the book to read it. The book will be available for you
+              to read for the period of time you requested after approval.
             </p>
-            <!-- <a
-                :href="'/request_book/' + 1"
-                class="btn fw-medium d align-items-center justify-content-center"
-                style="background-color: rgb(253, 147, 24); border-radius: 20px"
-                >Request for Book</a
-              > -->
+            <a
+              :href="'/bookreadadmin/' + this.$route.params.id"
+              class="btn fw-medium d align-items-center justify-content-center"
+              style="background-color: rgb(253, 147, 24); border-radius: 20px"
+              >View for Book</a
+            >
           </div>
         </div>
       </div>

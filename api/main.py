@@ -47,6 +47,10 @@ celery.conf.update(
             'task': 'main.monthly_report',
             'schedule': crontab(hour=12, minute=00, day_of_month=1),
         },
+        'mail_pdf_report_admin': {
+            'task': 'main.mail_pdf_report_admin',
+            'schedule': crontab(hour=12, minute=00, day_of_month=1),
+        },
         # 'check': {
         #     'task': 'main.check',
         #     'schedule': timedelta(seconds=10),
@@ -76,38 +80,84 @@ def reminder(bind=True):
     db.session.commit()
     return "Reminder sent"
 
-@app.route('/')
-def mail_login():
-
-    current_user=User.query.filter_by(id=9).first()
+def mail_pdf_report(id):
+    current_user=User.query.filter_by(id=id).first()
+    print(current_user.id)
     books=Books.query.all()
     books_lst=[]
-    books_count=[]
-    sections_count=[]
-    sections_name=[]
-    status_count=[]
-    status_name=[]
+    sections_lst=[]
+    status_lst=[]
+    temp={}
     for book in books:
+        temp=[]
         if History.query.filter_by(book_id=book.book_id,user_id=current_user.id).count()!=0:
-            books_lst.append(book.book_name)
-            books_count.append(History.query.filter_by(book_id=book.book_id,user_id=current_user.id).count())
+            temp.append(book.book_name)
+            temp.append(History.query.filter_by(book_id=book.book_id,user_id=current_user.id).count())
+            books_lst.append(temp)
     for section in Section.query.all():
+        temp=[]
         if History.query.filter_by(section_id=section.section_id,user_id=current_user.id).count()!=0:
-            sections_name.append(section.section_name)
-            sections_count.append(History.query.filter_by(section_id=section.section_id,user_id=current_user.id).count())
-    for books in History.query.all():
-        if books.status in status_name:
-            continue
-        status_name.append(History.query.filter_by(status=books.status,user_id=current_user.id).first().status)
-        status_count.append(History.query.filter_by(status=books.status,user_id=current_user.id).count())
+            temp.append(section.section_name)
+            temp.append(History.query.filter_by(section_id=section.section_id,user_id=current_user.id).count())
+            sections_lst.append(temp)
+    for books in History.query.with_entities(History.status).distinct().all():
+        temp=[]
+        temp.append(books.status)
+        temp.append(History.query.filter_by(status=books.status,user_id=current_user.id).count())
+        status_lst.append(temp)
     
-    data={'books': books_lst, 'books_count': books_count, 'status': 'success','current_user': current_user.serialize(),'sections_count': sections_count,'sections_name': sections_name,'status_name':status_name,'status_count':status_count}
+    data={'books_lst': books_lst, 'status': 'success','current_user': current_user.serialize(),'sections_lst': sections_lst,'status_lst':status_lst}
 
 
     rendered = render_template('user_report.html',data=data)
     pdf = weasyprint.HTML(string=rendered).write_pdf()
-    send_email("jeevanchoudhary2421@gmail.com", "PDF Report", "rendered", attachment=pdf)
+    email=Profile.query.filter_by(profile_id=current_user.profile_id).first().email
+    send_email(email, "PDF Report", "rendered", attachment=pdf)
     return rendered
+
+@celery.task()
+def mail_pdf_report_admin():
+    current_user=User.query.filter_by(role="admin").first()
+    print(current_user.id)
+    books=Books.query.all()
+    books_lst=[]
+    sections_lst=[]
+    status_lst=[]
+    temp={}
+    for book in books:
+        temp=[]
+        temp.append(book.book_name)
+        temp.append(History.query.filter_by(book_id=book.book_id).count())
+        books_lst.append(temp)
+
+    for section in Section.query.all():
+        temp=[]
+        temp.append(section.section_name)
+        temp.append(History.query.filter_by(section_id=section.section_id).count())
+        sections_lst.append(temp)
+    for books in History.query.with_entities(History.status).distinct().all():
+        temp=[]
+        temp.append(books.status)
+        temp.append(History.query.filter_by(status=books.status).count())
+        status_lst.append(temp)
+    
+    data={'books_lst': books_lst, 'status': 'success','current_user': current_user.serialize(),'sections_lst': sections_lst,'status_lst':status_lst}
+
+
+    rendered = render_template('user_report.html',data=data)
+    pdf = weasyprint.HTML(string=rendered).write_pdf()
+    email=Profile.query.filter_by(profile_id=current_user.profile_id).first().email
+    send_email(email, "PDF Report", "rendered", attachment=pdf)
+    return rendered
+
+@celery.task()
+def monthly_report():
+    print("Monthly Report Working")
+    users = User.query.all()
+    for user in users:
+        if user.role != 'admin':
+            mail_pdf_report(user.id)
+    return "Monthly Report Sent"
 
 @app.route('/token/<token>')
 def defectedlogin(token):

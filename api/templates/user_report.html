@@ -3,175 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Summary View</title>
-    <!-- Include Chart.js library -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>{{data.current_user.role}} Summary View </title>
+    <style>
+        body {
+            font-family: 'lato', sans-serif;
+        }
+        .container {
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+        h2 {
+            font-size: 26px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .responsive-table li {
+            border-radius: 3px;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .responsive-table .table-header {
+            background-color: #95A5A6;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .responsive-table .table-row {
+            background-color: #ffffff;
+            box-shadow: 0px 0px 9px 0px rgba(0,0,0,0.1);
+        }
+        .responsive-table .col-1 {
+            flex-basis: 10%;
+        }
+        .responsive-table .col-2 {
+            flex-basis: 40%;
+        }
+        .responsive-table .col-3 {
+            flex-basis: 25%;
+        }
+        .responsive-table .col-4 {
+            flex-basis: 25%;
+        }
+        @media all and (max-width: 767px) {
+            .responsive-table .table-header {
+                display: none;
+            }
+            .responsive-table .table-row {
+            }
+            .responsive-table li {
+                display: block;
+            }
+            .responsive-table .col {
+                flex-basis: 100%;
+            }
+            .responsive-table .col {
+                display: flex;
+                padding: 5px 0;
+            }
+            .responsive-table .col:before {
+                color: #6C7A89;
+                padding-right: 10px;
+                content: attr(data-label);
+                flex-basis: 50%;
+                text-align: right;
+            }
+        }
+    </style>
 </head>
 <body>
-    {{data}}
-    <div>
-        <div class="row">
-            <canvas
-                id="bookIssuanceChart"
-                width="800"
-                height="400"
-                style="max-height: 600px; max-width: 600px; margin: 50px"
-            ></canvas>
-            <canvas
-                id="SectionIssuanceChart"
-                width="800"
-                height="400"
-                style="max-height: 600px; max-width: 600px; margin: 50px"
-            ></canvas>
-            <canvas
-                id="statusIssuanceChart"
-                width="800"
-                height="400"
-                style="max-height: 600px; max-width: 600px; margin: 50px"
-            ></canvas>
-        </div>
+    <h1 style="text-align: center;">Report of the Month{%if data.current_user.role=="admin"%}(Confidential){%endif%}</h1>
+    <hr>
+
+    <h2>Books and Interaction</h2>
+    <div class="container">
+        <ul class="responsive-table">
+            <li class="table-header">
+                <div class="col col-2">Book Name</div>
+                <div class="col col-3">No of works</div>
+            </li>
+            {%for book in data.books_lst%}
+            <li class="table-row">
+                <div class="col col-2" data-label="Book Name">{{book[0]}}</div>
+                <div class="col col-3" data-label="No of works">{{book[1]}}</div>
+            </li>
+            {%endfor%}
+        </ul>
     </div>
 
-    <script>
-
-        window.addEventListener('DOMContentLoaded', (event) => {
-            // Fetch data from the server using AJAX or fetch API
-            // For demonstration purposes, let's assume data is already available
-            const data = {'books': ['demo', 'Edge of Physics', 'chemistry', 'maths', 'biology', 'zoology', 'botney', 'inorganic chemistry part2', 'Concept of Physics'], 'books_count': [4, 5, 9, 5, 2, 2, 3, 4, 1], 'status': 'success', 'current_user': {'id': 9, 'username': 'jeevan2421', 'profile_id': 9, 'role': 'user'}, 'sections_count': [24, 7, 4], 'sections_name': ['JEE Mains', 'NEET', 'Chemistry'], 'status_name': ['Returned', 'Overdue', 'Rejected', 'Revoked'], 'status_count': [8, 18, 3, 6]} ;
-            // Call the renderCharts function with the data
-            console.log("sss");
-            var ctxBook = document.getElementById('bookIssuanceChart').getContext('2d');
-            var bookChart = new Chart(ctxBook, {
-                type: 'bar',
-                data: {
-                    labels: data.books,
-                    datasets: [{
-                        label: 'Number of Issuances',
-                        data: data.books_count,
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.2)',
-                            'rgba(54, 162, 235, 0.2)',
-                            'rgba(255, 206, 86, 0.2)',
-                            'rgba(75, 192, 192, 0.2)',
-                            'rgba(153, 102, 255, 0.2)'
-                        ],
-                        borderColor: [
-                            'rgba(255, 99, 132, 1)',
-                            'rgba(54, 162, 235, 1)',
-                            'rgba(255, 206, 86, 1)',
-                            'rgba(75, 192, 192, 1)',
-                            'rgba(153, 102, 255, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Number of Issuances'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Book Name'
-                            }
-                        }
-                    }
-                }
-            });
-
-            var ctxSection = document.getElementById('SectionIssuanceChart').getContext('2d');
-            var sectionChart = new Chart(ctxSection, {
-                type: 'pie',
-                data: {
-                    labels: data.sections_name,
-                    datasets: [{
-                        label: 'Number of Issuances',
-                        data: data.sections_count,
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.2)',
-                            'rgba(54, 162, 235, 0.2)',
-                            'rgba(255, 206, 86, 0.2)',
-                            'rgba(75, 192, 192, 0.2)',
-                            'rgba(153, 102, 255, 0.2)'
-                        ],
-                        borderColor: [
-                            'rgba(255, 99, 132, 1)',
-                            'rgba(54, 162, 235, 1)',
-                            'rgba(255, 206, 86, 1)',
-                            'rgba(75, 192, 192, 1)',
-                            'rgba(153, 102, 255, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Number of Issuances'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Section Name'
-                            }
-                        }
-                    }
-                }
-            });
-
-            var ctxStatus = document.getElementById('statusIssuanceChart').getContext('2d');
-            var statusChart = new Chart(ctxStatus, {
-                type: 'line',
-                data: {
-                    labels: data.status_name,
-                    datasets: [{
-                        label: 'Number of Issuances',
-                        data: data.status_count,
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.2)',
-                            'rgba(54, 162, 235, 0.2)',
-                            'rgba(255, 206, 86, 0.2)',
-                            'rgba(75, 192, 192, 0.2)',
-                            'rgba(153, 102, 255, 0.2)'
-                        ],
-                        borderColor: [
-                            'rgba(255, 99, 132, 1)',
-                            'rgba(54, 162, 235, 1)',
-                            'rgba(255, 206, 86, 1)',
-                            'rgba(75, 192, 192, 1)',
-                            'rgba(153, 102, 255, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Number of Issuances'
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Status'
-                            }
-                        }
-                    }
-                }
-            });
-        });
-    </script>
+    <h2>Section and Interaction</h2>
+    <div class="container">
+        <ul class="responsive-table">
+            <li class="table-header">
+                <div class="col col-2">Section Name</div>
+                <div class="col col-3">No of works</div>
+            </li>
+            {%for section in data.sections_lst%}
+            <li class="table-row">
+                <div class="col col-2" data-label="Section Name">{{section[0]}}</div>
+                <div class="col col-3" data-label="No of works">{{section[1]}}</div>
+            </li>
+            {%endfor%}
+        </ul>
+    </div>
+    <h2>Status and Counts</h2>
+    <div class="container">
+        <ul class="responsive-table">
+            <li class="table-header">
+                <div class="col col-2">Status</div>
+                <div class="col col-3">No of works</div>
+            </li>
+            {%for status in data.status_lst%}
+            <li class="table-row">
+                <div class="col col-2" data-label="Status">{{status[0]}}</div>
+                <div class="col col-3" data-label="No of works">{{status[1]}}</div>
+            </li>
+            {%endfor%}
+        </ul>
+    </div>
 </body>
 </html>
