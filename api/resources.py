@@ -32,8 +32,8 @@ def send_email(to_email, subject, html_content,attachment=None):
     smtp_port = 587  # Gmail SMTP port
 
     # Sender's Gmail address and password
-    sender_email = 'jeevanchoudhary2421@gmail.com'
-    sender_password = 'sdyo knaw zkgj kvkd'
+    sender_email = '' #enter your email
+    sender_password = '' #enter code > you can get it at https://myaccount.google.com/apppasswords or search for "app password" in google account > create a new app code > format "wxyz wxyz wxyz wxyz" > enter it here
 
     # Create a MIME multipart message
     msg = MIMEMultipart()
@@ -82,10 +82,10 @@ def send_email(to_email, subject, html_content,attachment=None):
 #             server.starttls()
 
 #             # Login to the SMTP server
-#             server.login('jeevanchoudhary2421@gmail.com', 'sdyo knaw zkgj kvkd ')
+#             server.login('', 'wxyz wxyz wxyz wxyz')
 
 #             # Send the email
-#             server.sendmail('jeevanchoudhary2421@gmail.com', receiver_email, text)
+#             server.sendmail('', receiver_email, text)
 #             print('Email sent successfully.')
 
 #     except Exception as e:
