@@ -10,11 +10,12 @@ then
     echo ".venv folder exists. Runningcelery beats"
 else
     echo "creating .venv and install using pip"
-    virtualenv .venv
+    python3 -m venv .venv
 fi
 
 # Activate virtual env
-. .env/bin/activate
+. .venv/bin/activate
+pip install -r requirements.txt
 
 
 celery -A main.celery worker --loglevel=info

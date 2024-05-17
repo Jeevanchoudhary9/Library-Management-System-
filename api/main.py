@@ -8,7 +8,6 @@ from models import Books, History, Section, db, User
 from config import DevelopmentConfig, celeryConfig
 from resources import api
 from email.mime.multipart import MIMEMultipart
-from flask_mail import Mail,Message
 from celery.schedules import crontab
 
 # def create_app():

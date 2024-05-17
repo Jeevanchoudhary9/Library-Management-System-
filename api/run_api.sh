@@ -5,16 +5,16 @@ echo "Modern Application Development-II"
 echo "By - Jeevan Ramkrishna Choudhary (22f1001943)"
 echo "This file runs celery beats for the application"
 echo "----------------------------------------------------------------------"
-if [ -d ".env" ];
+if [ -d ".venv" ];
 then
-    echo ".env folder exists. Installing using pip"
+    echo ".venv folder exists. Runningcelery beats"
 else
-    echo "creating .env and install using pip"
-    virtualenv .env
+    echo "creating .venv and install using pip"
+    python3 -m venv .venv
 fi
 
 # Activate virtual env
-. .env/bin/activate
+. .venv/bin/activate
 
 # Make sure redis server is running
 service redis-server restart

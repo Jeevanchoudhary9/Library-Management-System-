@@ -131,7 +131,8 @@ class apiCheck(Resource):
     # Check API
     @cross_origin()
     def get(self):
-        Issue.refresh()
+        if Issue.query.filter_by(status='issued').count() > 0:
+            Issue.refresh()
         return make_response(jsonify({'status': 'Success'}), 200)
     
 api.add_resource(apiCheck, '/apiCheck')
@@ -945,7 +946,8 @@ class AdminBookRequested(Resource):
     method_decorators = [token_required]
 
     def get(self,current_user):
-        Issue.refresh()
+        if Issue.query.filter_by(status='issued').count() > 0:
+            Issue.refresh()
         if current_user.role != 'admin':
             return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         issues = Issue.query.all()
@@ -1050,7 +1052,8 @@ class AdminBookIssued(Resource):
     method_decorators = [token_required]
 
     def get(self,current_user):
-        Issue.refresh()
+        if Issue.query.filter_by(status='issued').count() > 0:
+            Issue.refresh()
         if current_user.role != 'admin':
             return make_response(jsonify({'message': 'You are not authorized to access this page!', 'status': 'error'}), 401)
         issues = Issue.query.all()
@@ -1139,6 +1142,7 @@ class UserSummary(Resource):
         for books in History.query.all():
             if books.status in status_name:
                 continue
+            print(books)
             status_name.append(History.query.filter_by(status=books.status,user_id=current_user.id).first().status)
             status_count.append(History.query.filter_by(status=books.status,user_id=current_user.id).count())
         
@@ -1178,7 +1182,7 @@ class pdfshow(Resource):
                 return Response(pdf_data, mimetype="application/pdf")
             
         if issue.status == 'Issued' or user.role == 'admin':
-            pdf=PDF.query.filter_by(book_id=10).first()
+            pdf=PDF.query.filter_by(book_id=book_id).first()
             with open(pdf.path, 'rb') as f:
                 pdf_data = f.read() 
             # return make_response(pdf_data, 200)
